@@ -1,13 +1,13 @@
 import Phaser from "phaser";
 
-type RoadBounds = {
+export type RoadBounds = {
   left: number;
   right: number;
 };
 
 export class DrivingSystem {
   private readonly scene: Phaser.Scene;
-  private readonly roadBounds: RoadBounds;
+  private roadBounds: RoadBounds;
   private readonly laneMarkers: Phaser.GameObjects.Rectangle[] = [];
   private readonly markerSpacing = 90;
   private readonly markerHeight = 56;
@@ -16,6 +16,9 @@ export class DrivingSystem {
   private static readonly depthLaneMarkers = 1;
   private static readonly depthCar = 3;
 
+  private roadFill!: Phaser.GameObjects.Rectangle;
+  private leftEdge!: Phaser.GameObjects.Rectangle;
+  private rightEdge!: Phaser.GameObjects.Rectangle;
   private car!: Phaser.GameObjects.Rectangle;
   private roadSpeed = 250;
   private steeringLerp = 0.18;
@@ -32,20 +35,15 @@ export class DrivingSystem {
   public create(): void {
     const { height } = this.scene.scale;
     const roadCenterX = (this.roadBounds.left + this.roadBounds.right) * 0.5;
+    const roadW = this.roadBounds.right - this.roadBounds.left;
 
-    const roadFill = this.scene.add.rectangle(
-      roadCenterX,
-      height * 0.5,
-      this.roadBounds.right - this.roadBounds.left,
-      height,
-      0x1f2937
-    );
-    roadFill.setDepth(DrivingSystem.depthRoad);
+    this.roadFill = this.scene.add.rectangle(roadCenterX, height * 0.5, roadW, height, 0x1f2937);
+    this.roadFill.setDepth(DrivingSystem.depthRoad);
 
-    const leftEdge = this.scene.add.rectangle(this.roadBounds.left, height * 0.5, 6, height, 0xf8fafc);
-    const rightEdge = this.scene.add.rectangle(this.roadBounds.right, height * 0.5, 6, height, 0xf8fafc);
-    leftEdge.setDepth(DrivingSystem.depthRoad);
-    rightEdge.setDepth(DrivingSystem.depthRoad);
+    this.leftEdge = this.scene.add.rectangle(this.roadBounds.left, height * 0.5, 6, height, 0xf8fafc);
+    this.rightEdge = this.scene.add.rectangle(this.roadBounds.right, height * 0.5, 6, height, 0xf8fafc);
+    this.leftEdge.setDepth(DrivingSystem.depthRoad);
+    this.rightEdge.setDepth(DrivingSystem.depthRoad);
 
     for (let y = -this.markerSpacing; y < height + this.markerSpacing; y += this.markerSpacing) {
       const marker = this.scene.add.rectangle(
@@ -62,6 +60,30 @@ export class DrivingSystem {
     this.car = this.scene.add.rectangle(roadCenterX, height - 72, 52, 92, 0x38bdf8);
     this.car.setDepth(DrivingSystem.depthCar);
     this.delayedTargetX = roadCenterX;
+  }
+
+  /** Reposition road visuals after resize or layout change. */
+  public relayout(): void {
+    const { height } = this.scene.scale;
+    const roadCenterX = (this.roadBounds.left + this.roadBounds.right) * 0.5;
+    const roadW = this.roadBounds.right - this.roadBounds.left;
+
+    this.roadFill.setPosition(roadCenterX, height * 0.5);
+    this.roadFill.width = roadW;
+    this.roadFill.height = height;
+
+    this.leftEdge.setPosition(this.roadBounds.left, height * 0.5);
+    this.leftEdge.height = height;
+    this.rightEdge.setPosition(this.roadBounds.right, height * 0.5);
+    this.rightEdge.height = height;
+
+    for (const marker of this.laneMarkers) {
+      marker.x = roadCenterX;
+    }
+
+    this.car.x = Phaser.Math.Clamp(this.car.x, this.roadBounds.left + 28, this.roadBounds.right - 28);
+    this.car.y = height - 72;
+    this.delayedTargetX = this.car.x;
   }
 
   public update(deltaSeconds: number): void {

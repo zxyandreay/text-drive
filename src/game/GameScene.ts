@@ -8,8 +8,9 @@ import { DialogueManager } from "./managers/DialogueManager";
 import { LevelManager } from "./managers/LevelManager";
 import { ProgressManager } from "./managers/ProgressManager";
 import { RunScore } from "./managers/RunScore";
-import { UiFactory } from "./ui/UiFactory";
 import { LevelIntroOverlay } from "./ui/LevelIntroOverlay";
+import { computeGameplayLayout, type GameplayLayoutMetrics } from "./ui/GameplayLayout";
+import { UiTheme } from "./ui/UiTheme";
 import levelsData from "../data/levels.json";
 import dialogueData from "../data/dialogue.json";
 import type { LevelConfig } from "./types/LevelTypes";
@@ -20,11 +21,8 @@ type GameSceneData = {
 
 type LevelFlowState = "preLevelNarration" | "gameplay" | "ending";
 
-const HUD_DEPTH = 10;
-const HEADER_DEPTH = 11;
-
 export class GameScene extends Phaser.Scene {
-  private readonly roadBounds = { left: 250, right: 650 };
+  private readonly roadBounds = { left: 0, right: 0 };
   private drivingSystem!: DrivingSystem;
   private obstacleSystem!: ObstacleSystem;
   private typingSystem!: TypingSystem;
@@ -34,66 +32,55 @@ export class GameScene extends Phaser.Scene {
   private dialogueManager!: DialogueManager;
   private progressManager!: ProgressManager;
   private runScore!: RunScore;
-  private statusText!: Phaser.GameObjects.Text;
+
+  private layout!: GameplayLayoutMetrics;
+  private topBarBg!: Phaser.GameObjects.Rectangle;
   private levelTitleText!: Phaser.GameObjects.Text;
-  private narrativeText!: Phaser.GameObjects.Text;
+  private progressText!: Phaser.GameObjects.Text;
   private stressText!: Phaser.GameObjects.Text;
+  private scoreText!: Phaser.GameObjects.Text;
+  private timerText!: Phaser.GameObjects.Text;
+  private toneText!: Phaser.GameObjects.Text;
+  private statusText!: Phaser.GameObjects.Text;
+  private hintCardBg!: Phaser.GameObjects.Rectangle;
+  private hintCardText!: Phaser.GameObjects.Text;
+  private backHit!: Phaser.GameObjects.Rectangle;
+  private backLabel!: Phaser.GameObjects.Text;
+
   private gameOver = false;
   private transitioningLevel = false;
   private remainingStorySeconds = 0;
   private crashCount = 0;
   private flowState: LevelFlowState = "preLevelNarration";
+  private pendingFlowTimer?: Phaser.Time.TimerEvent;
+  private hintFaded = false;
 
   constructor() {
     super("GameScene");
   }
 
   create(data: GameSceneData): void {
-    const { width, height } = this.scale;
-    this.cameras.main.setBackgroundColor("#020617");
+    this.cameras.main.setBackgroundColor(UiTheme.colors.bg);
     this.gameOver = false;
     this.transitioningLevel = false;
     this.crashCount = 0;
+    this.hintFaded = false;
+    this.pendingFlowTimer?.remove();
+    this.pendingFlowTimer = undefined;
 
-    const hudPanel = UiFactory.createPanel(this, 165, 126, 300, 178, 0.82);
-    hudPanel.setDepth(HUD_DEPTH);
+    this.layout = computeGameplayLayout(this.scale);
+    this.roadBounds.left = this.layout.road.left;
+    this.roadBounds.right = this.layout.road.right;
 
-    this.levelTitleText = this.add
-      .text(width / 2, 20, "TEXT DRIVE", {
-        fontFamily: "Arial",
-        fontSize: "28px",
-        color: "#e2e8f0"
-      })
-      .setOrigin(0.5, 0);
-    this.levelTitleText.setDepth(HEADER_DEPTH);
-
-    const hudHint = (x: number, y: number, content: string): void => {
-      const line = this.add
-        .text(x, y, content, { fontFamily: "Arial", fontSize: "15px", color: "#94a3b8" })
-        .setOrigin(0, 0);
-      line.setDepth(HUD_DEPTH);
-    };
-
-    hudHint(22, 62, "mouse: steer");
-    hudHint(22, 84, "keyboard: type reply then enter");
-    hudHint(22, 106, "backspace ok wrong letters ok until you send");
-    hudHint(22, 128, "story timer runs for the whole level");
-
-    this.narrativeText = this.add
-      .text(22, 156, "", {
-        fontFamily: "Arial",
-        fontSize: "14px",
-        color: "#cbd5e1",
-        wordWrap: { width: 285 }
-      })
-      .setOrigin(0, 0);
-    this.narrativeText.setDepth(HUD_DEPTH);
+    this.buildHudChrome();
 
     this.drivingSystem = new DrivingSystem(this, this.roadBounds);
     this.drivingSystem.create();
 
     this.obstacleSystem = new ObstacleSystem(this, this.roadBounds);
-    this.phoneUI = new PhoneUI(this);
+    this.phoneUI = new PhoneUI(this, this.layout.phone);
+    this.phoneUI.setDepth(this.layout.phoneDepth);
+
     this.runScore = new RunScore();
     this.typingSystem = new TypingSystem(this, this.phoneUI);
     this.typingSystem.setOnCorrectReply(() => {
@@ -105,24 +92,6 @@ export class GameScene extends Phaser.Scene {
     this.dialogueManager = new DialogueManager(dialogueData);
     this.progressManager = new ProgressManager(levelsData as LevelConfig[]);
 
-    this.statusText = this.add
-      .text(width / 2, height - 20, "drive and type at the same time", {
-        fontFamily: "Arial",
-        fontSize: "17px",
-        color: "#cbd5e1"
-      })
-      .setOrigin(0.5, 1);
-    this.statusText.setDepth(HEADER_DEPTH);
-
-    this.stressText = this.add
-      .text(400, 50, "", {
-        fontFamily: "Arial",
-        fontSize: "18px",
-        color: "#fca5a5"
-      })
-      .setOrigin(0.5, 0);
-    this.stressText.setDepth(HEADER_DEPTH);
-
     const startId = data.startLevelId;
     if (startId && !this.progressManager.isUnlocked(startId)) {
       this.scene.start("MainMenuScene");
@@ -132,7 +101,182 @@ export class GameScene extends Phaser.Scene {
       this.levelManager.setCurrentById(startId);
     }
     this.configureLevel();
+    this.applyHudLayout(this.layout);
+
+    this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this);
+    this.events.once("shutdown", () => {
+      this.scale.off(Phaser.Scale.Events.RESIZE, this.handleResize, this);
+      this.pendingFlowTimer?.remove();
+      this.pendingFlowTimer = undefined;
+    });
+
     this.showLevelIntro();
+  }
+
+  private buildHudChrome(): void {
+    const L = this.layout;
+    this.topBarBg = this.add.rectangle(
+      L.width * 0.5,
+      L.topBarTop + L.topBarH * 0.5,
+      L.width - L.marginX * 2,
+      L.topBarH,
+      0x0f172a,
+      0.88
+    );
+    this.topBarBg.setStrokeStyle(1, 0x334155, 0.75);
+    this.topBarBg.setDepth(L.headerDepth - 1);
+
+    this.backHit = this.add.rectangle(0, 0, 100, 34, 0x334155, 0.95);
+    this.backHit.setStrokeStyle(1, 0x64748b, 0.85);
+    this.backHit.setInteractive({ useHandCursor: true });
+    this.backHit.on("pointerup", () => {
+      this.exitToLevelSelect();
+    });
+    this.backLabel = this.add
+      .text(0, 0, "← levels", {
+        fontFamily: UiTheme.fontFamily,
+        fontSize: UiTheme.sizes.small,
+        color: UiTheme.colors.title
+      })
+      .setOrigin(0.5);
+    this.backHit.setDepth(L.headerDepth);
+    this.backLabel.setDepth(L.headerDepth + 1);
+
+    this.levelTitleText = this.add
+      .text(0, 0, "", {
+        fontFamily: UiTheme.fontFamily,
+        fontSize: UiTheme.sizes.titleMd,
+        color: UiTheme.colors.title
+      })
+      .setOrigin(0, 0.5);
+    this.levelTitleText.setDepth(L.headerDepth);
+
+    this.progressText = this.add
+      .text(0, 0, "", {
+        fontFamily: UiTheme.fontFamily,
+        fontSize: UiTheme.sizes.small,
+        color: UiTheme.colors.accent
+      })
+      .setOrigin(0, 0.5);
+    this.progressText.setDepth(L.headerDepth);
+
+    this.stressText = this.add
+      .text(0, 0, "", {
+        fontFamily: UiTheme.fontFamily,
+        fontSize: UiTheme.sizes.small,
+        color: UiTheme.colors.stress
+      })
+      .setOrigin(0, 0.5);
+    this.stressText.setDepth(L.headerDepth);
+
+    this.scoreText = this.add
+      .text(0, 0, "", {
+        fontFamily: UiTheme.fontFamily,
+        fontSize: UiTheme.sizes.small,
+        color: UiTheme.colors.body
+      })
+      .setOrigin(0, 0.5);
+    this.scoreText.setDepth(L.headerDepth);
+
+    this.timerText = this.add
+      .text(0, 0, "", {
+        fontFamily: UiTheme.fontFamily,
+        fontSize: UiTheme.sizes.small,
+        color: UiTheme.colors.stress
+      })
+      .setOrigin(0, 0.5);
+    this.timerText.setDepth(L.headerDepth);
+
+    this.toneText = this.add
+      .text(0, 0, "", {
+        fontFamily: UiTheme.fontFamily,
+        fontSize: UiTheme.sizes.hint,
+        color: UiTheme.colors.muted,
+        wordWrap: { width: Math.max(200, this.layout.width - this.layout.marginX * 2 - 24) }
+      })
+      .setOrigin(0, 0);
+    this.toneText.setDepth(L.hudDepth);
+
+    this.statusText = this.add
+      .text(0, 0, "", {
+        fontFamily: UiTheme.fontFamily,
+        fontSize: UiTheme.sizes.hint,
+        color: UiTheme.colors.body
+      })
+      .setOrigin(1, 0.5);
+    this.statusText.setDepth(L.headerDepth);
+
+    this.hintCardBg = this.add.rectangle(0, 0, 1, 1, 0x0f172a, 0.86);
+    this.hintCardBg.setStrokeStyle(1, 0x334155, 0.85);
+    this.hintCardBg.setDepth(L.hudDepth);
+
+    this.hintCardText = this.add
+      .text(0, 0, "mouse steer · enter send · backspace edit", {
+        fontFamily: UiTheme.fontFamily,
+        fontSize: UiTheme.sizes.hint,
+        color: UiTheme.colors.muted,
+        align: "left",
+        wordWrap: { width: 200 }
+      })
+      .setOrigin(0.5, 0.5);
+    this.hintCardText.setDepth(L.hudDepth + 1);
+  }
+
+  private applyHudLayout(L: GameplayLayoutMetrics): void {
+    const rowY = L.topBarTop + L.topBarH * 0.5;
+    const rightPad = L.marginX + 8;
+
+    this.topBarBg.setPosition(L.width * 0.5, L.topBarTop + L.topBarH * 0.5);
+    this.topBarBg.width = L.width - L.marginX * 2;
+    this.topBarBg.height = L.topBarH;
+
+    const backX = L.marginX + 52;
+    this.backHit.setPosition(backX, rowY);
+    this.backLabel.setPosition(backX, rowY);
+
+    let x = L.marginX + 118;
+    this.levelTitleText.setPosition(x, rowY);
+
+    x += this.levelTitleText.width + 14;
+    this.progressText.setPosition(x, rowY);
+
+    const statsStart = L.width * 0.52;
+    this.stressText.setPosition(statsStart, rowY);
+    this.scoreText.setPosition(statsStart + 118, rowY);
+    this.timerText.setPosition(statsStart + 232, rowY);
+
+    this.statusText.setPosition(L.width - rightPad, rowY);
+
+    const toneY = L.topBarTop + L.topBarH + 6;
+    this.toneText.setPosition(L.marginX + 8, toneY);
+    this.toneText.setWordWrapWidth(Math.max(200, L.width - L.marginX * 2 - 24), true);
+
+    const hint = L.hintCard;
+    this.hintCardBg.setPosition(hint.cx, hint.cy);
+    this.hintCardBg.setSize(hint.w, hint.h);
+    this.hintCardText.setPosition(hint.cx, hint.cy - 6);
+    this.hintCardText.setWordWrapWidth(Math.max(96, hint.w - 16), true);
+  }
+
+  private handleResize(): void {
+    if (!this.sys.isActive()) {
+      return;
+    }
+    this.layout = computeGameplayLayout(this.scale);
+    this.roadBounds.left = this.layout.road.left;
+    this.roadBounds.right = this.layout.road.right;
+    this.drivingSystem.relayout();
+    this.phoneUI.applyLayout(this.layout.phone);
+    this.phoneUI.setDepth(this.layout.phoneDepth);
+    this.applyHudLayout(this.layout);
+  }
+
+  private exitToLevelSelect(): void {
+    this.pendingFlowTimer?.remove();
+    this.pendingFlowTimer = undefined;
+    this.gameOver = true;
+    this.flowState = "ending";
+    this.scene.start("LevelSelectScene");
   }
 
   update(_time: number, delta: number): void {
@@ -155,7 +299,7 @@ export class GameScene extends Phaser.Scene {
 
     if (!this.transitioningLevel && !this.typingSystem.isCompleted()) {
       this.remainingStorySeconds = Math.max(0, this.remainingStorySeconds - deltaSeconds);
-      this.phoneUI.setStoryTimeRemaining(this.remainingStorySeconds);
+      this.refreshStoryTimerHud();
       if (this.remainingStorySeconds <= 0) {
         this.endRun("out of story time");
         return;
@@ -175,13 +319,15 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (this.typingSystem.isCompleted() && !this.obstacleSystem.isCrashed()) {
-      this.statusText.setText("conversation complete hold the lane");
-      this.statusText.setColor("#86efac");
+      this.statusText.setText("thread done · hold the lane");
+      this.statusText.setColor(UiTheme.colors.success);
     } else {
       this.statusText.setText("stay focused");
-      this.statusText.setColor("#cbd5e1");
+      this.statusText.setColor(UiTheme.colors.body);
     }
+
     this.stressText.setText(`stress ${this.stressSystem.getStress()}/${this.stressSystem.getMaxStress()}`);
+    this.scoreText.setText(`score ${this.runScore.getScore()}`);
 
     if (this.stressSystem.isOverloaded()) {
       this.endRun("cognitive overload");
@@ -190,6 +336,18 @@ export class GameScene extends Phaser.Scene {
 
     if (this.typingSystem.isCompleted() && !this.transitioningLevel) {
       this.handleLevelComplete();
+    }
+  }
+
+  private refreshStoryTimerHud(): void {
+    const t = this.remainingStorySeconds;
+    this.timerText.setText(`time ${t.toFixed(1)}s`);
+    if (t <= 12) {
+      this.timerText.setColor(UiTheme.colors.danger);
+    } else if (t <= 22) {
+      this.timerText.setColor(UiTheme.colors.warn);
+    } else {
+      this.timerText.setColor(UiTheme.colors.stress);
     }
   }
 
@@ -202,7 +360,9 @@ export class GameScene extends Phaser.Scene {
     const level = this.levelManager.getCurrentLevel();
     const score = this.runScore.getScore();
     const aftermathLines = this.dialogueManager.getOutcomeLines(level.id, "failure");
-    this.time.delayedCall(260, () => {
+    this.pendingFlowTimer?.remove();
+    this.pendingFlowTimer = this.time.delayedCall(260, () => {
+      this.pendingFlowTimer = undefined;
       this.scene.start("ResultScene", {
         outcome: "failure",
         levelId: level.id,
@@ -219,10 +379,11 @@ export class GameScene extends Phaser.Scene {
     const level = this.levelManager.getCurrentLevel();
     this.flowState = "preLevelNarration";
 
-    this.levelTitleText.setText(
-      `${level.title} (${this.levelManager.getCurrentLevelNumber()}/${this.levelManager.getTotalLevels()})`
+    this.levelTitleText.setText(level.title);
+    this.progressText.setText(
+      `${this.levelManager.getCurrentLevelNumber()}/${this.levelManager.getTotalLevels()}`
     );
-    this.narrativeText.setText(level.tone);
+    this.toneText.setText(level.tone);
 
     this.drivingSystem.setRoadSpeed(level.roadSpeed);
     this.obstacleSystem.configureLevel(level.obstacleSpeed, level.obstacleSpawnMs);
@@ -232,9 +393,12 @@ export class GameScene extends Phaser.Scene {
     this.runScore.reset();
     this.crashCount = 0;
     this.remainingStorySeconds = level.storyTimeSeconds;
-    this.phoneUI.setStoryTimeRemaining(this.remainingStorySeconds);
+    this.refreshStoryTimerHud();
     this.phoneUI.setIdleBeforeConversation();
     this.transitioningLevel = false;
+    this.hintFaded = false;
+    this.hintCardBg.setAlpha(1);
+    this.hintCardText.setAlpha(1);
   }
 
   private showLevelIntro(): void {
@@ -244,6 +408,9 @@ export class GameScene extends Phaser.Scene {
       lines: level.introNarration,
       onComplete: () => {
         this.beginGameplay();
+      },
+      onBack: () => {
+        this.exitToLevelSelect();
       }
     });
   }
@@ -252,6 +419,16 @@ export class GameScene extends Phaser.Scene {
     const level = this.levelManager.getCurrentLevel();
     this.flowState = "gameplay";
     this.typingSystem.startLevel(this.dialogueManager.getPrompts(level.id));
+
+    if (!this.hintFaded) {
+      this.hintFaded = true;
+      this.tweens.add({
+        targets: [this.hintCardBg, this.hintCardText],
+        alpha: 0.52,
+        duration: 520,
+        ease: "Sine.easeOut"
+      });
+    }
   }
 
   private handleLevelComplete(): void {
@@ -271,7 +448,9 @@ export class GameScene extends Phaser.Scene {
     const nextLevelId = this.levelManager.getNextLevelId();
     const aftermathLines = this.dialogueManager.getOutcomeLines(level.id, "success");
 
-    this.time.delayedCall(450, () => {
+    this.pendingFlowTimer?.remove();
+    this.pendingFlowTimer = this.time.delayedCall(450, () => {
+      this.pendingFlowTimer = undefined;
       this.scene.start("ResultScene", {
         outcome: "success",
         levelId: level.id,

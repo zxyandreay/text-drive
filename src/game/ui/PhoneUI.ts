@@ -1,103 +1,146 @@
 import Phaser from "phaser";
+import type { PhoneLayout } from "./GameplayLayout";
+import { UiTheme } from "./UiTheme";
 
 export class PhoneUI {
   private readonly scene: Phaser.Scene;
   private readonly container: Phaser.GameObjects.Container;
+  private readonly frame: Phaser.GameObjects.Rectangle;
+  private readonly headerBar: Phaser.GameObjects.Rectangle;
+  private readonly headerText: Phaser.GameObjects.Text;
   private readonly incomingText: Phaser.GameObjects.Text;
   private readonly targetText: Phaser.GameObjects.Text;
+  private readonly inputPanel: Phaser.GameObjects.Rectangle;
+  private readonly inputLabel: Phaser.GameObjects.Text;
   private readonly typedText: Phaser.GameObjects.Text;
   private readonly statusText: Phaser.GameObjects.Text;
-  private readonly timerText: Phaser.GameObjects.Text;
   private readonly vibrationOverlay: Phaser.GameObjects.Rectangle;
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: Phaser.Scene, initial: PhoneLayout) {
     this.scene = scene;
 
-    const phoneX = 690;
-    const phoneY = 300;
-    const phoneWidth = 370;
-    const phoneHeight = 456;
+    this.frame = scene.add.rectangle(0, 0, 1, 1, 0x0b1220, 0.92);
+    this.frame.setStrokeStyle(1, 0x334155, 0.9);
 
-    const frame = scene.add.rectangle(phoneX, phoneY, phoneWidth, phoneHeight, 0x0b1220, 0.95);
-    frame.setStrokeStyle(2, 0x334155);
+    this.headerBar = scene.add.rectangle(0, 0, 1, 1, 0x111827, 1);
+    this.headerBar.setStrokeStyle(1, 0x1e293b, 0.6);
 
-    const header = scene.add.rectangle(phoneX, phoneY - 196, phoneWidth - 14, 50, 0x111827, 1);
-    const headerText = scene.add
-      .text(phoneX - 168, phoneY - 213, "messages", {
-        fontFamily: "Arial",
-        fontSize: "21px",
-        color: "#e2e8f0"
+    this.headerText = scene.add
+      .text(0, 0, "messages", {
+        fontFamily: UiTheme.fontFamily,
+        fontSize: UiTheme.sizes.phoneHeader,
+        color: UiTheme.colors.title
       })
       .setOrigin(0, 0);
 
     this.incomingText = scene.add
-      .text(phoneX - 168, phoneY - 160, "", {
-        fontFamily: "Arial",
-        fontSize: "16px",
-        color: "#bfdbfe",
-        wordWrap: { width: 332 }
+      .text(0, 0, "", {
+        fontFamily: UiTheme.fontFamily,
+        fontSize: UiTheme.sizes.phoneBody,
+        color: UiTheme.colors.accent,
+        wordWrap: { width: 280 }
       })
       .setOrigin(0, 0);
 
     this.targetText = scene.add
-      .text(phoneX - 168, phoneY - 90, "", {
-        fontFamily: "Arial",
-        fontSize: "17px",
-        color: "#f8fafc",
-        wordWrap: { width: 332 }
+      .text(0, 0, "", {
+        fontFamily: UiTheme.fontFamily,
+        fontSize: UiTheme.sizes.phoneBody,
+        color: UiTheme.colors.title,
+        wordWrap: { width: 280 }
       })
       .setOrigin(0, 0);
 
-    const inputPanel = scene.add.rectangle(phoneX, phoneY + 120, phoneWidth - 24, 170, 0x1e293b, 0.95);
-    inputPanel.setStrokeStyle(1, 0x475569);
-    const inputLabel = scene.add
-      .text(phoneX - 162, phoneY + 38, "your reply", {
-        fontFamily: "Arial",
-        fontSize: "14px",
-        color: "#93c5fd"
+    this.inputPanel = scene.add.rectangle(0, 0, 1, 1, 0x1e293b, 0.94);
+    this.inputPanel.setStrokeStyle(1, 0x475569, 0.75);
+
+    this.inputLabel = scene.add
+      .text(0, 0, "your reply", {
+        fontFamily: UiTheme.fontFamily,
+        fontSize: UiTheme.sizes.small,
+        color: UiTheme.colors.accent
       })
       .setOrigin(0, 0);
-    this.vibrationOverlay = scene.add.rectangle(phoneX, phoneY, phoneWidth - 12, phoneHeight - 12, 0xf8fafc, 0);
+
+    this.vibrationOverlay = scene.add.rectangle(0, 0, 1, 1, 0xf8fafc, 0);
 
     this.typedText = scene.add
-      .text(phoneX - 162, phoneY + 62, "", {
+      .text(0, 0, "", {
         fontFamily: "Consolas, monospace",
-        fontSize: "18px",
-        color: "#f8fafc",
-        wordWrap: { width: 324 }
+        fontSize: UiTheme.sizes.phoneMono,
+        color: UiTheme.colors.title,
+        wordWrap: { width: 268 }
       })
       .setOrigin(0, 0);
 
     this.statusText = scene.add
-      .text(phoneX - 162, phoneY + 150, "", {
-        fontFamily: "Arial",
-        fontSize: "14px",
-        color: "#94a3b8"
+      .text(0, 0, "", {
+        fontFamily: UiTheme.fontFamily,
+        fontSize: UiTheme.sizes.small,
+        color: UiTheme.colors.muted
       })
       .setOrigin(0, 0);
 
-    this.timerText = scene.add
-      .text(phoneX + 162, phoneY + 150, "", {
-        fontFamily: "Arial",
-        fontSize: "14px",
-        color: "#fca5a5"
-      })
-      .setOrigin(1, 0);
-
     this.container = scene.add.container(0, 0, [
-      frame,
-      header,
-      headerText,
+      this.frame,
+      this.headerBar,
+      this.headerText,
       this.incomingText,
       this.targetText,
-      inputPanel,
-      inputLabel,
+      this.inputPanel,
+      this.inputLabel,
       this.vibrationOverlay,
       this.typedText,
-      this.statusText,
-      this.timerText
+      this.statusText
     ]);
     this.container.setDepth(20);
+
+    this.applyLayout(initial);
+  }
+
+  public applyLayout(phone: PhoneLayout): void {
+    const { centerX, centerY, width, height } = phone;
+    const halfW = width * 0.5;
+    const halfH = height * 0.5;
+    const padX = 10;
+    const innerW = width - padX * 2;
+    const headerH = 40;
+
+    this.frame.setPosition(centerX, centerY);
+    this.frame.setSize(width, height);
+
+    const headerTop = centerY - halfH + 8;
+    this.headerBar.setPosition(centerX, headerTop + headerH * 0.5);
+    this.headerBar.setSize(innerW, headerH);
+
+    const left = centerX - halfW + padX;
+    this.headerText.setPosition(left, headerTop + 6);
+
+    let y = headerTop + headerH + 10;
+    this.incomingText.setPosition(left, y);
+    this.incomingText.setWordWrapWidth(Math.max(160, innerW - 4), true);
+
+    y += 52;
+    this.targetText.setPosition(left, y);
+    this.targetText.setWordWrapWidth(Math.max(160, innerW - 4), true);
+
+    const inputH = Phaser.Math.Clamp(Math.round(height * 0.28), 120, 168);
+    const inputTop = centerY + halfH - inputH - padX - 28;
+    this.inputPanel.setPosition(centerX, inputTop + inputH * 0.5);
+    this.inputPanel.setSize(innerW - 4, inputH);
+
+    this.inputLabel.setPosition(left + 2, inputTop + 8);
+    this.typedText.setPosition(left + 2, inputTop + 32);
+    this.typedText.setWordWrapWidth(Math.max(160, innerW - 12), true);
+
+    this.statusText.setPosition(left + 2, inputTop + inputH - 26);
+
+    this.vibrationOverlay.setPosition(centerX, centerY);
+    this.vibrationOverlay.setSize(width - 8, height - 8);
+  }
+
+  public setDepth(depth: number): void {
+    this.container.setDepth(depth);
   }
 
   /** Clears thread until the first real prompt (e.g. during level intro). */
@@ -105,8 +148,8 @@ export class PhoneUI {
     this.incomingText.setText("");
     this.targetText.setText("");
     this.typedText.setText("_");
-    this.statusText.setText("messages will appear when you continue");
-    this.statusText.setColor("#64748b");
+    this.statusText.setText("messages appear after you continue");
+    this.statusText.setColor(UiTheme.colors.muted);
   }
 
   public setPrompt(incoming: string, exactReply: string): void {
@@ -120,20 +163,9 @@ export class PhoneUI {
     this.typedText.setText(value.length > 0 ? value : "_");
   }
 
-  public setStatus(message: string, color = "#94a3b8"): void {
+  public setStatus(message: string, color: string = UiTheme.colors.muted): void {
     this.statusText.setText(message);
     this.statusText.setColor(color);
-  }
-
-  public setStoryTimeRemaining(secondsRemaining: number): void {
-    this.timerText.setText(`story: ${secondsRemaining.toFixed(1)}s`);
-    if (secondsRemaining <= 12) {
-      this.timerText.setColor("#f87171");
-    } else if (secondsRemaining <= 22) {
-      this.timerText.setColor("#fb923c");
-    } else {
-      this.timerText.setColor("#fca5a5");
-    }
   }
 
   public vibrate(durationSeconds: number): void {
@@ -142,10 +174,10 @@ export class PhoneUI {
 
     this.scene.tweens.add({
       targets: this.container,
-      x: { from: -7, to: 7 },
-      duration: 44,
+      x: { from: -5, to: 5 },
+      duration: 40,
       yoyo: true,
-      repeat: Math.floor((durationSeconds * 1000) / 44),
+      repeat: Math.floor((durationSeconds * 1000) / 40),
       onComplete: () => {
         this.container.x = 0;
       }
@@ -153,10 +185,10 @@ export class PhoneUI {
 
     this.scene.tweens.add({
       targets: this.vibrationOverlay,
-      alpha: { from: 0.22, to: 0 },
-      duration: 80,
+      alpha: { from: 0.18, to: 0 },
+      duration: 72,
       yoyo: true,
-      repeat: Math.floor((durationSeconds * 1000) / 80)
+      repeat: Math.floor((durationSeconds * 1000) / 72)
     });
   }
 }

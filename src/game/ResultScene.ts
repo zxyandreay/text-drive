@@ -20,6 +20,8 @@ export class ResultScene extends Phaser.Scene {
   private dataPayload!: ResultSceneData;
   private phase: ResultFlowPhase = "result";
   private basePanel!: Phaser.GameObjects.Rectangle;
+  private chromeDepth = 30;
+  private phaseRoot!: Phaser.GameObjects.Container;
 
   constructor() {
     super("ResultScene");
@@ -32,14 +34,41 @@ export class ResultScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor("#020617");
 
     this.basePanel = UiFactory.createPanel(this, width / 2, height / 2, 600, 460, 0.92);
+    this.basePanel.setDepth(0);
+
+    const backY = 52;
+    const backX = 96;
+    const backBg = this.add.rectangle(backX, backY, 132, 40, 0x334155, 0.95);
+    backBg.setStrokeStyle(1, 0x64748b, 0.9);
+    backBg.setInteractive({ useHandCursor: true });
+    backBg.setDepth(this.chromeDepth);
+    const backLabel = this.add
+      .text(backX, backY, "← level select", {
+        fontFamily: "Arial",
+        fontSize: "15px",
+        color: "#e2e8f0"
+      })
+      .setOrigin(0.5);
+    backLabel.setDepth(this.chromeDepth + 1);
+    backBg.on("pointerup", () => {
+      this.scene.start("LevelSelectScene");
+    });
+
+    this.phaseRoot = this.add.container(0, 0);
+    this.phaseRoot.setDepth(10);
 
     this.renderResultPhase();
+  }
+
+  private clearPhaseRoot(): void {
+    this.phaseRoot.removeAll(true);
   }
 
   private renderResultPhase(): void {
     if (this.phase !== "result") {
       return;
     }
+    this.clearPhaseRoot();
     const data = this.dataPayload;
     const { width } = this.scale;
     const progress = new ProgressManager(levelsData as LevelConfig[]);
@@ -100,28 +129,21 @@ export class ResultScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    const scoreViewObjects: Phaser.GameObjects.GameObject[] = [headlineText, levelTitleText, scoreText, bestText];
+    this.phaseRoot.add(headlineText);
+    this.phaseRoot.add(levelTitleText);
+    this.phaseRoot.add(scoreText);
+    this.phaseRoot.add(bestText);
     if (reasonText) {
-      scoreViewObjects.push(reasonText);
+      this.phaseRoot.add(reasonText);
     }
 
-    const continueButton = UiFactory.createButton(this, width / 2, 350, "continue", () => {
+    UiFactory.createButtonInContainer(this.phaseRoot, this, width / 2, 350, "continue", () => {
       if (this.phase !== "result") {
         return;
       }
       this.phase = "aftermath";
-      scoreViewObjects.forEach((obj) => obj.destroy());
-      continueButton.destroy();
-      this.destroyNonPanelObjects();
+      this.clearPhaseRoot();
       this.renderAftermathPhase();
-    });
-  }
-
-  private destroyNonPanelObjects(): void {
-    this.children.list.forEach((child) => {
-      if (child !== this.basePanel) {
-        child.destroy();
-      }
     });
   }
 
@@ -129,6 +151,7 @@ export class ResultScene extends Phaser.Scene {
     if (this.phase !== "aftermath") {
       return;
     }
+    this.clearPhaseRoot();
     const data = this.dataPayload;
     const { width } = this.scale;
     const title = data.outcome === "success" ? "what happened after" : "what followed";
@@ -137,7 +160,7 @@ export class ResultScene extends Phaser.Scene {
         ? data.aftermathLines
         : ["you take a breath and the story keeps moving", "you can choose what to do next"];
 
-    this.add
+    const titleText = this.add
       .text(width / 2, 120, title, {
         fontFamily: "Arial",
         fontSize: "30px",
@@ -145,7 +168,7 @@ export class ResultScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    this.add
+    const bodyText = this.add
       .text(width / 2, 212, bodyLines.join("\n\n"), {
         fontFamily: "Arial",
         fontSize: "18px",
@@ -155,22 +178,25 @@ export class ResultScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
+    this.phaseRoot.add(titleText);
+    this.phaseRoot.add(bodyText);
+
     let buttonY = 328;
 
     if (data.outcome === "success" && data.nextLevelId) {
-      UiFactory.createButton(this, width / 2, buttonY, "play next level", () => {
+      UiFactory.createButtonInContainer(this.phaseRoot, this, width / 2, buttonY, "play next level", () => {
         this.scene.start("GameScene", { startLevelId: data.nextLevelId });
       });
       buttonY += 58;
     }
 
-    UiFactory.createButton(this, width / 2, buttonY, "play again", () => {
+    UiFactory.createButtonInContainer(this.phaseRoot, this, width / 2, buttonY, "play again", () => {
       this.scene.start("GameScene", { startLevelId: data.levelId });
     });
     buttonY += 58;
 
     if (data.outcome === "success" && data.nextLevelId === null) {
-      UiFactory.createButton(this, width / 2, buttonY, "continue to ending", () => {
+      UiFactory.createButtonInContainer(this.phaseRoot, this, width / 2, buttonY, "continue to ending", () => {
         this.scene.start("EndingScene", {
           finalMessage:
             "you made it to the end of the road.\nbut every message demanded attention that driving needed.\nno reply is worth a life."
@@ -179,7 +205,8 @@ export class ResultScene extends Phaser.Scene {
       buttonY += 58;
     }
 
-    UiFactory.createButton(
+    UiFactory.createButtonInContainer(
+      this.phaseRoot,
       this,
       width / 2,
       buttonY,

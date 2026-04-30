@@ -23,46 +23,57 @@ export class LevelSelectScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
+    const cardW = Math.min(640, width - 48);
+    const cardH = 92;
+    const startY = 150;
+
     levels.forEach((level, index) => {
-      const y = 160 + index * 110;
+      const y = startY + index * (cardH + 14);
       const unlocked = progressManager.isUnlocked(level.id);
       const completed = progressManager.isCompleted(level.id);
 
-      const card = UiFactory.createPanel(this, width / 2, y, 640, 88, unlocked ? 0.92 : 0.72);
+      const cardRoot = this.add.container(width / 2, y);
+
+      const hit = this.add.rectangle(0, 0, cardW, cardH, 0x0f172a, unlocked ? 0.92 : 0.72);
+      hit.setStrokeStyle(2, 0x334155, 0.9);
       if (!unlocked) {
-        card.setFillStyle(0x0b1220, 0.72);
+        hit.setFillStyle(0x0b1220, 0.72);
       }
 
       const titleColor = unlocked ? "#e2e8f0" : "#64748b";
       const subColor = unlocked ? "#93c5fd" : "#475569";
-      this.add
-        .text(width / 2 - 290, y - 26, level.title, {
+      const titleText = this.add
+        .text(-cardW / 2 + 18, -26, level.title, {
           fontFamily: "Arial",
           fontSize: "26px",
           color: titleColor
         })
         .setOrigin(0, 0);
 
-      this.add
-        .text(width / 2 - 290, y + 10, unlocked ? level.tone : "Locked - finish previous level", {
+      const subText = this.add
+        .text(-cardW / 2 + 18, 12, unlocked ? level.tone : "Locked — finish the previous level", {
           fontFamily: "Arial",
           fontSize: "16px",
-          color: subColor
+          color: subColor,
+          wordWrap: { width: cardW - 200 }
         })
         .setOrigin(0, 0);
 
       const badge = completed ? "Completed" : unlocked ? "Unlocked" : "Locked";
-      this.add
-        .text(width / 2 + 222, y - 8, badge, {
+      const badgeColor = completed ? "#86efac" : unlocked ? "#fcd34d" : "#94a3b8";
+      const badgeText = this.add
+        .text(cardW / 2 - 18, 0, badge, {
           fontFamily: "Arial",
           fontSize: "18px",
-          color: completed ? "#86efac" : unlocked ? "#fcd34d" : "#94a3b8"
+          color: badgeColor
         })
-        .setOrigin(0.5);
+        .setOrigin(1, 0.5);
+
+      cardRoot.add([hit, titleText, subText, badgeText]);
 
       if (unlocked) {
-        card.setInteractive({ useHandCursor: true });
-        card.on("pointerup", () => {
+        hit.setInteractive({ useHandCursor: true });
+        hit.on("pointerup", () => {
           this.scene.start("GameScene", { startLevelId: level.id });
         });
       }
