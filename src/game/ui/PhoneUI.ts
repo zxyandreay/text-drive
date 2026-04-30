@@ -23,7 +23,7 @@ export class PhoneUI {
 
     const header = scene.add.rectangle(phoneX, phoneY - 196, phoneWidth - 14, 50, 0x111827, 1);
     const headerText = scene.add
-      .text(phoneX - 168, phoneY - 213, "Messages", {
+      .text(phoneX - 168, phoneY - 213, "messages", {
         fontFamily: "Arial",
         fontSize: "21px",
         color: "#e2e8f0"
@@ -51,7 +51,7 @@ export class PhoneUI {
     const inputPanel = scene.add.rectangle(phoneX, phoneY + 120, phoneWidth - 24, 170, 0x1e293b, 0.95);
     inputPanel.setStrokeStyle(1, 0x475569);
     const inputLabel = scene.add
-      .text(phoneX - 162, phoneY + 38, "Your reply", {
+      .text(phoneX - 162, phoneY + 38, "your reply", {
         fontFamily: "Arial",
         fontSize: "14px",
         color: "#93c5fd"
@@ -101,9 +101,9 @@ export class PhoneUI {
   }
 
   public setPrompt(incoming: string, exactReply: string): void {
-    this.incomingText.setText(`Incoming: ${incoming}`);
-    this.targetText.setText(`Reply exactly:\n"${exactReply}"`);
-    this.statusText.setText("Type while driving");
+    this.incomingText.setText(`incoming: ${incoming}`);
+    this.targetText.setText(`reply exactly:\n${exactReply}`);
+    this.statusText.setText("type while driving");
     this.setTypedValue("");
   }
 
@@ -116,11 +116,11 @@ export class PhoneUI {
     this.statusText.setColor(color);
   }
 
-  public setTimer(secondsRemaining: number): void {
-    this.timerText.setText(`Time: ${secondsRemaining.toFixed(1)}s`);
-    if (secondsRemaining <= 2.5) {
+  public setStoryTimeRemaining(secondsRemaining: number): void {
+    this.timerText.setText(`story: ${secondsRemaining.toFixed(1)}s`);
+    if (secondsRemaining <= 12) {
       this.timerText.setColor("#f87171");
-    } else if (secondsRemaining <= 4) {
+    } else if (secondsRemaining <= 22) {
       this.timerText.setColor("#fb923c");
     } else {
       this.timerText.setColor("#fca5a5");

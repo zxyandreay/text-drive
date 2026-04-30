@@ -6,12 +6,12 @@ export type LevelConfig = {
   obstacleSpeed: number;
   obstacleSpawnMs: number;
   maxStress: number;
+  storyTimeSeconds: number;
 };
 
 export type DialoguePrompt = {
   incoming: string;
   reply: string;
-  timeLimitSeconds: number;
 };
 
 export type DialogueBlock = {

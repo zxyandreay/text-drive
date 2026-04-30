@@ -6,7 +6,8 @@
     "roadSpeed": 222,
     "obstacleSpeed": 238,
     "obstacleSpawnMs": 1340,
-    "maxStress": 5
+    "maxStress": 5,
+    "storyTimeSeconds": 95
   },
   {
     "id": "marriage",
@@ -15,7 +16,8 @@
     "roadSpeed": 246,
     "obstacleSpeed": 270,
     "obstacleSpawnMs": 1080,
-    "maxStress": 4
+    "maxStress": 4,
+    "storyTimeSeconds": 85
   },
   {
     "id": "dying-wife",
@@ -24,6 +26,7 @@
     "roadSpeed": 262,
     "obstacleSpeed": 292,
     "obstacleSpawnMs": 980,
-    "maxStress": 3
+    "maxStress": 3,
+    "storyTimeSeconds": 75
   }
 ]
