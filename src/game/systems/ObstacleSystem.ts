@@ -27,7 +27,7 @@ export class ObstacleSystem {
 
   public update(deltaSeconds: number, carBounds: Phaser.Geom.Rectangle, roadSpeed: number): void {
     this.speedBoostTimer = Math.max(0, this.speedBoostTimer - deltaSeconds);
-    this.speedBoostMultiplier = this.speedBoostTimer > 0 ? 1.35 : 1;
+    this.speedBoostMultiplier = this.speedBoostTimer > 0 ? this.speedBoostMultiplier : 1;
     this.crashCooldownSeconds = Math.max(0, this.crashCooldownSeconds - deltaSeconds);
 
     this.elapsedSinceSpawn += deltaSeconds * 1000;
@@ -72,8 +72,9 @@ export class ObstacleSystem {
     return true;
   }
 
-  public applyTemporarySpeedIncrease(durationSeconds: number): void {
+  public applyTemporarySpeedIncrease(durationSeconds: number, multiplier = 1.18): void {
     this.speedBoostTimer = Math.max(this.speedBoostTimer, durationSeconds);
+    this.speedBoostMultiplier = Math.max(this.speedBoostMultiplier, multiplier);
   }
 
   public configureLevel(obstacleSpeed: number, spawnTimerMs: number): void {

@@ -3,27 +3,27 @@
     "id": "first-date",
     "title": "Level 1: First Date",
     "tone": "casual, short, forgiving",
-    "roadSpeed": 228,
-    "obstacleSpeed": 248,
-    "obstacleSpawnMs": 1240,
+    "roadSpeed": 222,
+    "obstacleSpeed": 238,
+    "obstacleSpawnMs": 1340,
     "maxStress": 5
   },
   {
     "id": "marriage",
     "title": "Level 2: Marriage",
     "tone": "formal, longer, demanding",
-    "roadSpeed": 255,
-    "obstacleSpeed": 285,
-    "obstacleSpawnMs": 960,
+    "roadSpeed": 246,
+    "obstacleSpeed": 270,
+    "obstacleSpawnMs": 1080,
     "maxStress": 4
   },
   {
     "id": "dying-wife",
     "title": "Level 3: Dying Wife",
     "tone": "short, heavy, oppressive",
-    "roadSpeed": 276,
-    "obstacleSpeed": 318,
-    "obstacleSpawnMs": 860,
+    "roadSpeed": 262,
+    "obstacleSpeed": 292,
+    "obstacleSpawnMs": 980,
     "maxStress": 3
   }
 ]
