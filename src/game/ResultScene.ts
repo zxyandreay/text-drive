@@ -11,6 +11,7 @@ export type ResultSceneData = {
   score: number;
   reason?: string;
   nextLevelId: string | null;
+  aftermathLines: string[];
 };
 
 export class ResultScene extends Phaser.Scene {
@@ -37,7 +38,7 @@ export class ResultScene extends Phaser.Scene {
     const headline = data.outcome === "success" ? "level complete" : "run ended";
     const headlineColor = data.outcome === "success" ? "#86efac" : "#fca5a5";
 
-    this.add
+    const headlineText = this.add
       .text(width / 2, 108, headline, {
         fontFamily: "Arial",
         fontSize: "42px",
@@ -45,7 +46,7 @@ export class ResultScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    this.add
+    const levelTitleText = this.add
       .text(width / 2, 162, data.levelTitle, {
         fontFamily: "Arial",
         fontSize: "22px",
@@ -53,8 +54,9 @@ export class ResultScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
+    let reasonText: Phaser.GameObjects.Text | null = null;
     if (data.outcome === "failure" && data.reason) {
-      this.add
+      reasonText = this.add
         .text(width / 2, 204, data.reason, {
           fontFamily: "Arial",
           fontSize: "18px",
@@ -65,7 +67,7 @@ export class ResultScene extends Phaser.Scene {
         .setOrigin(0.5);
     }
 
-    this.add
+    const scoreText = this.add
       .text(width / 2, 252, `score ${data.score}`, {
         fontFamily: "Arial",
         fontSize: "28px",
@@ -73,7 +75,7 @@ export class ResultScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    this.add
+    const bestText = this.add
       .text(width / 2, 294, `best ${bestShown}`, {
         fontFamily: "Arial",
         fontSize: "20px",
@@ -81,12 +83,41 @@ export class ResultScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    let buttonY = 340;
+    const scoreViewObjects: Phaser.GameObjects.GameObject[] = [headlineText, levelTitleText, scoreText, bestText];
+    if (reasonText) {
+      scoreViewObjects.push(reasonText);
+    }
 
-    UiFactory.createButton(this, width / 2, buttonY, "play again", () => {
-      this.scene.start("GameScene", { startLevelId: data.levelId });
+    const continueButton = UiFactory.createButton(this, width / 2, 350, "continue", () => {
+      scoreViewObjects.forEach((obj) => obj.destroy());
+      continueButton.destroy();
+      this.renderAftermathView(data);
     });
-    buttonY += 58;
+  }
+
+  private renderAftermathView(data: ResultSceneData): void {
+    const { width } = this.scale;
+    const title = data.outcome === "success" ? "what happened after" : "what followed";
+
+    this.add
+      .text(width / 2, 120, title, {
+        fontFamily: "Arial",
+        fontSize: "30px",
+        color: "#e2e8f0"
+      })
+      .setOrigin(0.5);
+
+    this.add
+      .text(width / 2, 212, data.aftermathLines.join("\n\n"), {
+        fontFamily: "Arial",
+        fontSize: "18px",
+        color: "#cbd5e1",
+        align: "center",
+        wordWrap: { width: 520 }
+      })
+      .setOrigin(0.5);
+
+    let buttonY = 328;
 
     if (data.outcome === "success" && data.nextLevelId) {
       UiFactory.createButton(this, width / 2, buttonY, "play next level", () => {
@@ -94,6 +125,11 @@ export class ResultScene extends Phaser.Scene {
       });
       buttonY += 58;
     }
+
+    UiFactory.createButton(this, width / 2, buttonY, "play again", () => {
+      this.scene.start("GameScene", { startLevelId: data.levelId });
+    });
+    buttonY += 58;
 
     if (data.outcome === "success" && data.nextLevelId === null) {
       UiFactory.createButton(this, width / 2, buttonY, "continue to ending", () => {

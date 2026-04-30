@@ -9,6 +9,7 @@ import { LevelManager } from "./managers/LevelManager";
 import { ProgressManager } from "./managers/ProgressManager";
 import { RunScore } from "./managers/RunScore";
 import { UiFactory } from "./ui/UiFactory";
+import { LevelIntroOverlay } from "./ui/LevelIntroOverlay";
 import levelsData from "../data/levels.json";
 import dialogueData from "../data/dialogue.json";
 import type { LevelConfig } from "./types/LevelTypes";
@@ -36,6 +37,7 @@ export class GameScene extends Phaser.Scene {
   private transitioningLevel = false;
   private remainingStorySeconds = 0;
   private crashCount = 0;
+  private introDismissed = false;
 
   constructor() {
     super("GameScene");
@@ -128,11 +130,15 @@ export class GameScene extends Phaser.Scene {
     if (startId) {
       this.levelManager.setCurrentById(startId);
     }
-    this.startCurrentLevel();
+    this.configureLevel();
+    this.showLevelIntro();
   }
 
   update(_time: number, delta: number): void {
     if (this.gameOver) {
+      return;
+    }
+    if (!this.introDismissed) {
       return;
     }
 
@@ -193,6 +199,7 @@ export class GameScene extends Phaser.Scene {
     }
     const level = this.levelManager.getCurrentLevel();
     const score = this.runScore.getScore();
+    const aftermathLines = this.dialogueManager.getOutcomeLines(level.id, "failure");
     this.time.delayedCall(260, () => {
       this.scene.start("ResultScene", {
         outcome: "failure",
@@ -200,19 +207,20 @@ export class GameScene extends Phaser.Scene {
         levelTitle: level.title,
         score,
         reason,
-        nextLevelId: null
+        nextLevelId: null,
+        aftermathLines
       });
     });
   }
 
-  private startCurrentLevel(): void {
+  private configureLevel(): void {
     const level = this.levelManager.getCurrentLevel();
-    const intro = this.dialogueManager.getIntro(level.id);
+    this.introDismissed = false;
 
     this.levelTitleText.setText(
       `${level.title} (${this.levelManager.getCurrentLevelNumber()}/${this.levelManager.getTotalLevels()})`
     );
-    this.narrativeText.setText(`${level.tone}\n${intro}`);
+    this.narrativeText.setText(level.tone);
 
     this.drivingSystem.setRoadSpeed(level.roadSpeed);
     this.obstacleSystem.configureLevel(level.obstacleSpeed, level.obstacleSpawnMs);
@@ -223,8 +231,25 @@ export class GameScene extends Phaser.Scene {
     this.crashCount = 0;
     this.remainingStorySeconds = level.storyTimeSeconds;
     this.phoneUI.setStoryTimeRemaining(this.remainingStorySeconds);
-    this.typingSystem.startLevel(this.dialogueManager.getPrompts(level.id));
+    this.phoneUI.setIdleBeforeConversation();
     this.transitioningLevel = false;
+  }
+
+  private showLevelIntro(): void {
+    const level = this.levelManager.getCurrentLevel();
+    new LevelIntroOverlay(this, {
+      title: level.title,
+      lines: level.introNarration,
+      onComplete: () => {
+        this.beginGameplay();
+      }
+    });
+  }
+
+  private beginGameplay(): void {
+    const level = this.levelManager.getCurrentLevel();
+    this.introDismissed = true;
+    this.typingSystem.startLevel(this.dialogueManager.getPrompts(level.id));
   }
 
   private handleLevelComplete(): void {
@@ -241,6 +266,7 @@ export class GameScene extends Phaser.Scene {
 
     const score = this.runScore.getScore();
     const nextLevelId = this.levelManager.getNextLevelId();
+    const aftermathLines = this.dialogueManager.getOutcomeLines(level.id, "success");
 
     this.time.delayedCall(450, () => {
       this.scene.start("ResultScene", {
@@ -249,7 +275,8 @@ export class GameScene extends Phaser.Scene {
         levelTitle: level.title,
         score,
         reason: undefined,
-        nextLevelId
+        nextLevelId,
+        aftermathLines
       });
     });
   }

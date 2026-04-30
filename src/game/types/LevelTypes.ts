@@ -2,6 +2,7 @@ export type LevelConfig = {
   id: string;
   title: string;
   tone: string;
+  introNarration: string[];
   roadSpeed: number;
   obstacleSpeed: number;
   obstacleSpawnMs: number;
@@ -15,7 +16,10 @@ export type DialoguePrompt = {
 };
 
 export type DialogueBlock = {
-  intro: string;
   outro: string;
+  outcome: {
+    success: string[];
+    failure: string[];
+  };
   prompts: DialoguePrompt[];
 };
