@@ -65,6 +65,20 @@ Points for correct sends, clearing the level, leftover story time, and a no-cras
 Penalties for wrong Enter submits, crashes, overload failure, and running out of story time.  
 Best score per level updates only on **successful** level completion.
 
+Tune point values in `src/game/managers/RunScore.ts`.  
+Tune per-level **story** time budgets in `src/data/levels.json` (`storyTimeSeconds`).
+
+## Dialogue & content style
+
+- In-game copy in `src/data/dialogue.json` is written **lowercase** with **minimal punctuation** on purpose.
+- Required replies are compared with **trim + lowercase**, so typing capital letters still matches.
+
+## NPM scripts
+
+- `npm run dev` — Vite dev server
+- `npm run build` — TypeScript check + production bundle to `dist/`
+- `npm run preview` — Serve the production build locally
+
 ## Tech Stack
 
 - TypeScript
@@ -128,3 +142,9 @@ src/
 - No cloud sync (local browser only)
 - Placeholder visuals
 - Small scope: one core mechanic, not a full commercial title
+
+## Implementation notes
+
+- **Result flow:** `src/game/ResultScene.ts` records level completion and best score on success; failures do not advance unlocks.
+- **Input:** `TypingSystem` removes its keyboard listener on scene `shutdown` so restarting a level does not stack handlers.
+- **UI buttons:** `UiFactory` uses an interactive rectangle plus separate text so hit areas align with the scaled canvas.
