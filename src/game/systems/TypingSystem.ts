@@ -7,6 +7,8 @@ export type TypingIncident = {
   reason: TypingFailureReason;
 };
 
+const REPLY_HINT_DELAY_MS = 850;
+
 function normalizeForCompare(value: string): string {
   return value.trim().toLowerCase();
 }
@@ -22,6 +24,8 @@ export class TypingSystem {
   private completed = false;
   private incidentQueue: TypingIncident[] = [];
   private onCorrectReply?: () => void;
+  private hintRevealTimer?: Phaser.Time.TimerEvent;
+  private nextPromptTimer?: Phaser.Time.TimerEvent;
 
   constructor(scene: Phaser.Scene, phoneUI: PhoneUI) {
     this.scene = scene;
@@ -37,7 +41,15 @@ export class TypingSystem {
     this.scene.events.once("shutdown", this.dispose, this);
   }
 
+  private cancelTimers(): void {
+    this.hintRevealTimer?.remove();
+    this.hintRevealTimer = undefined;
+    this.nextPromptTimer?.remove();
+    this.nextPromptTimer = undefined;
+  }
+
   private dispose(): void {
+    this.cancelTimers();
     this.scene.input.keyboard?.off("keydown", this.handleKeyDown, this);
   }
 
@@ -72,12 +84,29 @@ export class TypingSystem {
       return;
     }
 
+    this.cancelTimers();
+
     const wrapped = index % this.prompts.length;
     this.currentIndex = wrapped;
     this.typedValue = "";
     const prompt = this.prompts[wrapped];
-    this.phoneUI.setPrompt(prompt.incoming, prompt.reply);
-    this.phoneUI.setTypedValue(this.typedValue);
+
+    this.phoneUI.showIncoming(prompt.incoming);
+    this.phoneUI.clearReplyHint();
+    this.phoneUI.refreshTypedDisplay("", prompt.reply);
+    this.phoneUI.setStatus("type while driving");
+
+    this.hintRevealTimer = this.scene.time.delayedCall(REPLY_HINT_DELAY_MS, () => {
+      this.hintRevealTimer = undefined;
+      if (!this.isUnderPressure()) {
+        return;
+      }
+      const p = this.prompts[this.currentIndex];
+      if (!p) {
+        return;
+      }
+      this.phoneUI.setReplyHint(p.reply);
+    });
   }
 
   private handleKeyDown(event: KeyboardEvent): void {
@@ -91,7 +120,7 @@ export class TypingSystem {
     if (event.key === "Backspace") {
       event.preventDefault();
       this.typedValue = this.typedValue.slice(0, -1);
-      this.phoneUI.setTypedValue(this.typedValue);
+      this.phoneUI.refreshTypedDisplay(this.typedValue, prompt.reply);
       this.phoneUI.setStatus("edit anytime");
       return;
     }
@@ -100,6 +129,8 @@ export class TypingSystem {
       event.preventDefault();
       const submitted = normalizeForCompare(this.typedValue);
       if (submitted === expected) {
+        this.cancelTimers();
+        this.phoneUI.clearReplyHint();
         this.onCorrectReply?.();
         this.completedCount += 1;
         if (this.completedCount >= this.prompts.length) {
@@ -107,7 +138,8 @@ export class TypingSystem {
           this.phoneUI.setStatus("all messages sent", "#86efac");
         } else {
           this.phoneUI.setStatus("sent next message soon", "#86efac");
-          this.scene.time.delayedCall(500, () => {
+          this.nextPromptTimer = this.scene.time.delayedCall(500, () => {
+            this.nextPromptTimer = undefined;
             this.loadPrompt(this.currentIndex + 1);
           });
         }
@@ -120,7 +152,7 @@ export class TypingSystem {
 
     if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
       this.typedValue += event.key;
-      this.phoneUI.setTypedValue(this.typedValue);
+      this.phoneUI.refreshTypedDisplay(this.typedValue, prompt.reply);
       this.phoneUI.setStatus("press enter when ready");
     }
   }
