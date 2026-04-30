@@ -1,0 +1,30 @@
+{
+  "first-date": {
+    "intro": "You are driving to meet someone new. Nothing feels urgent yet.",
+    "outro": "You got through the first conversation.",
+    "prompts": [
+      { "incoming": "where are you?", "reply": "On my way.", "timeLimitSeconds": 9 },
+      { "incoming": "lol are you late?", "reply": "Almost there.", "timeLimitSeconds": 8.5 },
+      { "incoming": "what are you wearing", "reply": "Blue jacket.", "timeLimitSeconds": 8 }
+    ]
+  },
+  "marriage": {
+    "intro": "Years later, the tone is tighter. Every delay feels loaded.",
+    "outro": "The argument pauses, but the tension stays.",
+    "prompts": [
+      { "incoming": "Please confirm your arrival time.", "reply": "I will arrive at 7:10.", "timeLimitSeconds": 8 },
+      { "incoming": "Did you read my last message?", "reply": "Yes. I am driving now.", "timeLimitSeconds": 7.5 },
+      { "incoming": "Answer me clearly.", "reply": "I cannot type safely.", "timeLimitSeconds": 7 },
+      { "incoming": "Then call me now.", "reply": "Not while driving.", "timeLimitSeconds": 6.8 }
+    ]
+  },
+  "dying-wife": {
+    "intro": "The hospital texts are short. Every second hurts.",
+    "outro": "You keep driving, but something is already slipping away.",
+    "prompts": [
+      { "incoming": "where are you", "reply": "I am close.", "timeLimitSeconds": 6.8 },
+      { "incoming": "she is fading", "reply": "Please hold on.", "timeLimitSeconds": 6.4 },
+      { "incoming": "come now", "reply": "I am trying.", "timeLimitSeconds": 6 }
+    ]
+  }
+}
