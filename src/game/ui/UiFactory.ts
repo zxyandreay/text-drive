@@ -51,6 +51,12 @@ export class UiFactory {
       .setOrigin(0.5);
     text.setDepth(bg.depth + 1);
 
+    bg.once("destroy", () => {
+      if (text.active) {
+        text.destroy();
+      }
+    });
+
     bg.on("pointerover", () => {
       bg.setScale(1.02);
       bg.setFillStyle(backgroundColor, 1);
