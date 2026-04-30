@@ -19,6 +19,7 @@ type ResultFlowPhase = "result" | "aftermath";
 export class ResultScene extends Phaser.Scene {
   private dataPayload!: ResultSceneData;
   private phase: ResultFlowPhase = "result";
+  private basePanel!: Phaser.GameObjects.Rectangle;
 
   constructor() {
     super("ResultScene");
@@ -30,7 +31,7 @@ export class ResultScene extends Phaser.Scene {
     const { width, height } = this.scale;
     this.cameras.main.setBackgroundColor("#020617");
 
-    UiFactory.createPanel(this, width / 2, height / 2, 600, 460, 0.92);
+    this.basePanel = UiFactory.createPanel(this, width / 2, height / 2, 600, 460, 0.92);
 
     this.renderResultPhase();
   }
@@ -111,7 +112,16 @@ export class ResultScene extends Phaser.Scene {
       this.phase = "aftermath";
       scoreViewObjects.forEach((obj) => obj.destroy());
       continueButton.destroy();
+      this.destroyNonPanelObjects();
       this.renderAftermathPhase();
+    });
+  }
+
+  private destroyNonPanelObjects(): void {
+    this.children.list.forEach((child) => {
+      if (child !== this.basePanel) {
+        child.destroy();
+      }
     });
   }
 
