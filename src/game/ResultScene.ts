@@ -14,17 +14,33 @@ export type ResultSceneData = {
   aftermathLines: string[];
 };
 
+type ResultFlowPhase = "result" | "aftermath";
+
 export class ResultScene extends Phaser.Scene {
+  private dataPayload!: ResultSceneData;
+  private phase: ResultFlowPhase = "result";
+
   constructor() {
     super("ResultScene");
   }
 
   create(data: ResultSceneData): void {
+    this.dataPayload = data;
+    this.phase = "result";
     const { width, height } = this.scale;
     this.cameras.main.setBackgroundColor("#020617");
 
     UiFactory.createPanel(this, width / 2, height / 2, 600, 460, 0.92);
 
+    this.renderResultPhase();
+  }
+
+  private renderResultPhase(): void {
+    if (this.phase !== "result") {
+      return;
+    }
+    const data = this.dataPayload;
+    const { width } = this.scale;
     const progress = new ProgressManager(levelsData as LevelConfig[]);
     let bestShown: number;
 
@@ -89,15 +105,27 @@ export class ResultScene extends Phaser.Scene {
     }
 
     const continueButton = UiFactory.createButton(this, width / 2, 350, "continue", () => {
+      if (this.phase !== "result") {
+        return;
+      }
+      this.phase = "aftermath";
       scoreViewObjects.forEach((obj) => obj.destroy());
       continueButton.destroy();
-      this.renderAftermathView(data);
+      this.renderAftermathPhase();
     });
   }
 
-  private renderAftermathView(data: ResultSceneData): void {
+  private renderAftermathPhase(): void {
+    if (this.phase !== "aftermath") {
+      return;
+    }
+    const data = this.dataPayload;
     const { width } = this.scale;
     const title = data.outcome === "success" ? "what happened after" : "what followed";
+    const bodyLines =
+      data.aftermathLines.length > 0
+        ? data.aftermathLines
+        : ["you take a breath and the story keeps moving", "you can choose what to do next"];
 
     this.add
       .text(width / 2, 120, title, {
@@ -108,7 +136,7 @@ export class ResultScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.add
-      .text(width / 2, 212, data.aftermathLines.join("\n\n"), {
+      .text(width / 2, 212, bodyLines.join("\n\n"), {
         fontFamily: "Arial",
         fontSize: "18px",
         color: "#cbd5e1",
