@@ -4,7 +4,7 @@
     "title": "Level 1: First Date",
     "tone": "casual, short, forgiving",
     "introNarration": [
-      "tonight you are driving to meet them for the first time",
+      "tonight you are driving to meet your date for the first time",
       "your phone keeps lighting up and you cannot look away for long",
       "everything feels bright and a little fragile"
     ],
@@ -31,7 +31,7 @@
   },
   {
     "id": "dying-wife",
-    "title": "Level 3: Dying Wife",
+    "title": "Level 3: Hospital",
     "tone": "short, heavy, oppressive",
     "introNarration": [
       "you are on the way to the hospital again",
