@@ -4,8 +4,8 @@ import { UiTheme } from "./UiTheme";
 import { buildCharCells, layoutCellsAsPlacedSegments } from "./typingHighlightLayout";
 
 const INPUT_INNER_PAD = 14;
-const HINT_ALPHA_STRONG = 0.44;
-const HINT_ALPHA_FADED = 0.12;
+const HINT_ALPHA_STRONG = 0.55;
+const HINT_ALPHA_FADED = 0.27;
 const LABEL_TO_TYPED_GAP = 8;
 const PANEL_TOP_PAD = 12;
 export class PhoneUI {
@@ -116,6 +116,12 @@ export class PhoneUI {
     const headerH = 40;
     const panelInnerW = innerW - 4;
 
+    const panelLeft = centerX - panelInnerW * 0.5;
+    this.contentLeft = panelLeft + INPUT_INNER_PAD;
+    this.contentWidth = Math.max(80, panelInnerW - INPUT_INNER_PAD * 2);
+    const frameContentRight = centerX + halfW - padX;
+    const messageWrapW = Math.max(160, frameContentRight - this.contentLeft - INPUT_INNER_PAD);
+
     this.frame.setPosition(centerX, centerY);
     this.frame.setSize(width, height);
 
@@ -123,21 +129,16 @@ export class PhoneUI {
     this.headerBar.setPosition(centerX, headerTop + headerH * 0.5);
     this.headerBar.setSize(innerW, headerH);
 
-    const left = centerX - halfW + padX;
-    this.headerText.setPosition(left, headerTop + 6);
+    this.headerText.setPosition(this.contentLeft, headerTop + 7);
 
     const incomingY = headerTop + headerH + 10;
-    this.incomingText.setPosition(left, incomingY);
-    this.incomingText.setWordWrapWidth(Math.max(160, innerW - 4), true);
+    this.incomingText.setPosition(this.contentLeft, incomingY);
+    this.incomingText.setWordWrapWidth(messageWrapW, true);
 
     const inputH = Phaser.Math.Clamp(Math.round(height * 0.28), 120, 168);
     const inputTop = centerY + halfH - inputH - padX - 28;
     this.inputPanel.setPosition(centerX, inputTop + inputH * 0.5);
     this.inputPanel.setSize(panelInnerW, inputH);
-
-    const panelLeft = centerX - panelInnerW * 0.5;
-    this.contentLeft = panelLeft + INPUT_INNER_PAD;
-    this.contentWidth = Math.max(80, panelInnerW - INPUT_INNER_PAD * 2);
 
     this.inputLabel.setPosition(this.contentLeft, inputTop + PANEL_TOP_PAD);
 
