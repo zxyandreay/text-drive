@@ -100,6 +100,15 @@ export class PhoneUI {
     this.container.setDepth(20);
   }
 
+  /** Clears thread until the first real prompt (e.g. during level intro). */
+  public setIdleBeforeConversation(): void {
+    this.incomingText.setText("");
+    this.targetText.setText("");
+    this.typedText.setText("_");
+    this.statusText.setText("messages will appear when you continue");
+    this.statusText.setColor("#64748b");
+  }
+
   public setPrompt(incoming: string, exactReply: string): void {
     this.incomingText.setText(`incoming: ${incoming}`);
     this.targetText.setText(`reply exactly:\n${exactReply}`);

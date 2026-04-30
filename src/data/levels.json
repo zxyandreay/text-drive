@@ -3,30 +3,45 @@
     "id": "first-date",
     "title": "Level 1: First Date",
     "tone": "casual, short, forgiving",
+    "introNarration": [
+      "tonight you are driving to meet them for the first time",
+      "your phone keeps lighting up and you cannot look away for long",
+      "everything feels bright and a little fragile"
+    ],
     "roadSpeed": 222,
     "obstacleSpeed": 238,
     "obstacleSpawnMs": 1340,
     "maxStress": 5,
-    "storyTimeSeconds": 95
+    "storyTimeSeconds": 168
   },
   {
     "id": "marriage",
     "title": "Level 2: Marriage",
     "tone": "formal, longer, demanding",
+    "introNarration": [
+      "years in you are still learning how to fight fair in a small space",
+      "today the messages are about time and who shows up",
+      "every line lands heavier because you already know each other too well"
+    ],
     "roadSpeed": 246,
     "obstacleSpeed": 270,
     "obstacleSpawnMs": 1080,
     "maxStress": 4,
-    "storyTimeSeconds": 85
+    "storyTimeSeconds": 175
   },
   {
     "id": "dying-wife",
     "title": "Level 3: Dying Wife",
     "tone": "short, heavy, oppressive",
+    "introNarration": [
+      "you are on the way to the hospital again",
+      "the texts are short because there is not much room left for small talk",
+      "you type without looking and hope the words still reach her"
+    ],
     "roadSpeed": 262,
     "obstacleSpeed": 292,
     "obstacleSpawnMs": 980,
     "maxStress": 3,
-    "storyTimeSeconds": 75
+    "storyTimeSeconds": 132
   }
 ]

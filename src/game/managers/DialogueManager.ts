@@ -9,12 +9,12 @@ export class DialogueManager {
     this.dialogueData = dialogueData;
   }
 
-  public getIntro(levelId: string): string {
-    return this.getBlock(levelId).intro;
-  }
-
   public getOutro(levelId: string): string {
     return this.getBlock(levelId).outro;
+  }
+
+  public getOutcomeLines(levelId: string, outcome: "success" | "failure"): string[] {
+    return this.getBlock(levelId).outcome[outcome];
   }
 
   public getPrompts(levelId: string): DialoguePrompt[] {

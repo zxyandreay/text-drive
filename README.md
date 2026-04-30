@@ -33,17 +33,20 @@ The mechanics stay consistent across three short narrative levels:
 - Main menu and level select with strict unlock order (derived from completed levels)
 - Per-run **score**, **best score per level** (saved locally on successful clears)
 - **Story timer** per level (whole-segment budget, not per-message typing limits)
-- **Result screen** after success or failure (play again, next level when applicable, main menu)
+- **Level intro narration** before gameplay starts (fade-in context + continue)
+- **Two-step result flow**: score first, then short success/failure aftermath context
 - Submit-only typing validation (no per-letter punishment)
 - Local persistence: `localStorage` key `text-drive-progress-v2` (older saves may migrate from v1)
 
 ## Current Game Flow
 
 1. Main menu → Play or Level select
-2. Gameplay: drive, type, beat the story clock, finish all messages
-3. **Result** screen with score and best (success or failure)
-4. Success: optional **Play next level** or **Continue to ending** on the final level
-5. Failure: **Play again** or **Main menu**
+2. **Level intro** narration appears before each run (including replays)
+3. Gameplay: drive, type, beat the story clock, finish all messages
+4. **Result** score screen (success or failure)
+5. **Aftermath** screen with short post-level story context based on success/failure
+6. Success: optional **Play next level** or **Continue to ending** on the final level
+7. Failure: **Play again** or **Main menu**
 
 ## Controls
 
@@ -68,9 +71,14 @@ Best score per level updates only on **successful** level completion.
 Tune point values in `src/game/managers/RunScore.ts`.  
 Tune per-level **story** time budgets in `src/data/levels.json` (`storyTimeSeconds`).
 
-## Dialogue & content style
+## Narrative & content style
 
-- In-game copy in `src/data/dialogue.json` is written **lowercase** with **minimal punctuation** on purpose.
+- In-game copy is written **lowercase** with **minimal punctuation** on purpose.
+- Level setup in `src/data/levels.json` includes `introNarration` (short context lines shown pre-level).
+- Dialogue and outcome text in `src/data/dialogue.json` include:
+  - in-level `prompts`
+  - `outcome.success` aftermath lines
+  - `outcome.failure` aftermath lines
 - Required replies are compared with **trim + lowercase**, so typing capital letters still matches.
 
 ## NPM scripts
@@ -130,6 +138,7 @@ src/
     types/
       LevelTypes.ts
     ui/
+      LevelIntroOverlay.ts
       PhoneUI.ts
       UiFactory.ts
   main.ts
@@ -145,6 +154,7 @@ src/
 
 ## Implementation notes
 
-- **Result flow:** `src/game/ResultScene.ts` records level completion and best score on success; failures do not advance unlocks.
+- **Result flow:** `src/game/ResultScene.ts` records completion/best on success, then shows a short aftermath step before action buttons.
+- **Narration flow:** `src/game/ui/LevelIntroOverlay.ts` shows pre-level context; `GameScene` gates timer and typing until intro dismissal.
 - **Input:** `TypingSystem` removes its keyboard listener on scene `shutdown` so restarting a level does not stack handlers.
 - **UI buttons:** `UiFactory` uses an interactive rectangle plus separate text so hit areas align with the scaled canvas.
