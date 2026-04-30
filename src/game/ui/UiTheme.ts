@@ -12,7 +12,15 @@ export const UiTheme = {
     stress: "#fca5a5",
     success: "#86efac",
     warn: "#fb923c",
-    danger: "#f87171"
+    danger: "#f87171",
+    /** Faded expected-reply hint inside the input panel */
+    replyHint: "#64748b",
+    /** Typed characters that match expected (case-insensitive) */
+    typedCorrect: "#f1f5f9",
+    /** Typed characters that do not match at the same index */
+    typedWrong: "#f87171",
+    /** Empty-input cursor */
+    typedCursor: "#64748b"
   },
   sizes: {
     titleLg: "26px",
