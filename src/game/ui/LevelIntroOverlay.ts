@@ -12,7 +12,8 @@ export type LevelIntroOverlayOptions = {
 export class LevelIntroOverlay {
   private readonly container: Phaser.GameObjects.Container;
   private readonly onComplete: () => void;
-  private dismissed = false;
+  private phase: "entering" | "ready" | "dismissing" = "entering";
+  private minDismissAt = 0;
 
   constructor(scene: Phaser.Scene, options: LevelIntroOverlayOptions) {
     this.onComplete = options.onComplete;
@@ -20,6 +21,7 @@ export class LevelIntroOverlay {
     const { width, height } = scene.scale;
     const backdrop = scene.add.rectangle(width / 2, height / 2, width, height, 0x020617, 0.92);
     backdrop.setStrokeStyle(2, 0x334155, 0.85);
+    backdrop.setInteractive({ useHandCursor: true });
 
     const titleText = scene.add
       .text(width / 2, height * 0.28, options.title, {
@@ -56,16 +58,19 @@ export class LevelIntroOverlay {
       targets: this.container,
       alpha: 1,
       duration: 420,
-      ease: "Sine.easeOut"
+      ease: "Sine.easeOut",
+      onComplete: () => {
+        this.phase = "ready";
+      }
     });
 
     const dismiss = (): void => {
-      if (this.dismissed) {
+      if (this.phase !== "ready" || scene.time.now < this.minDismissAt) {
         return;
       }
-      this.dismissed = true;
+      this.phase = "dismissing";
       scene.input.keyboard?.off("keydown", onKey, this);
-      scene.input.off("pointerdown", dismiss, this);
+      backdrop.off("pointerup", dismiss, this);
 
       scene.tweens.add({
         targets: this.container,
@@ -80,13 +85,17 @@ export class LevelIntroOverlay {
     };
 
     const onKey = (event: KeyboardEvent): void => {
+      if (this.phase !== "ready" || scene.time.now < this.minDismissAt) {
+        return;
+      }
       if (event.key === " " || event.key === "Enter") {
         event.preventDefault();
         dismiss();
       }
     };
 
+    this.minDismissAt = scene.time.now + 150;
     scene.input.keyboard?.on("keydown", onKey, this);
-    scene.input.once("pointerdown", dismiss, this);
+    backdrop.on("pointerup", dismiss, this);
   }
 }

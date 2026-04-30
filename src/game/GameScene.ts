@@ -18,6 +18,8 @@ type GameSceneData = {
   startLevelId?: string;
 };
 
+type LevelFlowState = "preLevelNarration" | "gameplay" | "ending";
+
 export class GameScene extends Phaser.Scene {
   private readonly roadBounds = { left: 250, right: 650 };
   private drivingSystem!: DrivingSystem;
@@ -37,7 +39,7 @@ export class GameScene extends Phaser.Scene {
   private transitioningLevel = false;
   private remainingStorySeconds = 0;
   private crashCount = 0;
-  private introDismissed = false;
+  private flowState: LevelFlowState = "preLevelNarration";
 
   constructor() {
     super("GameScene");
@@ -138,7 +140,7 @@ export class GameScene extends Phaser.Scene {
     if (this.gameOver) {
       return;
     }
-    if (!this.introDismissed) {
+    if (this.flowState !== "gameplay") {
       return;
     }
 
@@ -194,6 +196,7 @@ export class GameScene extends Phaser.Scene {
 
   private endRun(reason: string): void {
     this.gameOver = true;
+    this.flowState = "ending";
     if (reason === "cognitive overload") {
       this.runScore.penalizeOverload();
     }
@@ -215,7 +218,7 @@ export class GameScene extends Phaser.Scene {
 
   private configureLevel(): void {
     const level = this.levelManager.getCurrentLevel();
-    this.introDismissed = false;
+    this.flowState = "preLevelNarration";
 
     this.levelTitleText.setText(
       `${level.title} (${this.levelManager.getCurrentLevelNumber()}/${this.levelManager.getTotalLevels()})`
@@ -248,13 +251,14 @@ export class GameScene extends Phaser.Scene {
 
   private beginGameplay(): void {
     const level = this.levelManager.getCurrentLevel();
-    this.introDismissed = true;
+    this.flowState = "gameplay";
     this.typingSystem.startLevel(this.dialogueManager.getPrompts(level.id));
   }
 
   private handleLevelComplete(): void {
     this.transitioningLevel = true;
     this.gameOver = true;
+    this.flowState = "ending";
     const level = this.levelManager.getCurrentLevel();
     const storyLeft = this.remainingStorySeconds;
 
