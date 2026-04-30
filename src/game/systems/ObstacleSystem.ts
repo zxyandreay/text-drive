@@ -98,6 +98,7 @@ export class ObstacleSystem {
   private spawnObstacle(): void {
     const spawnX = Phaser.Math.Between(this.roadBounds.left + 30, this.roadBounds.right - 30);
     const obstacle = this.scene.add.rectangle(spawnX, -50, 42, 80, 0xf97316);
+    obstacle.setDepth(2);
     this.obstacles.push(obstacle);
   }
 

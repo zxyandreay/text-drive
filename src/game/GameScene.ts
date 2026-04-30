@@ -20,6 +20,9 @@ type GameSceneData = {
 
 type LevelFlowState = "preLevelNarration" | "gameplay" | "ending";
 
+const HUD_DEPTH = 10;
+const HEADER_DEPTH = 11;
+
 export class GameScene extends Phaser.Scene {
   private readonly roadBounds = { left: 250, right: 650 };
   private drivingSystem!: DrivingSystem;
@@ -52,7 +55,8 @@ export class GameScene extends Phaser.Scene {
     this.transitioningLevel = false;
     this.crashCount = 0;
 
-    UiFactory.createPanel(this, 165, 126, 300, 178, 0.82);
+    const hudPanel = UiFactory.createPanel(this, 165, 126, 300, 178, 0.82);
+    hudPanel.setDepth(HUD_DEPTH);
 
     this.levelTitleText = this.add
       .text(width / 2, 20, "TEXT DRIVE", {
@@ -61,27 +65,19 @@ export class GameScene extends Phaser.Scene {
         color: "#e2e8f0"
       })
       .setOrigin(0.5, 0);
+    this.levelTitleText.setDepth(HEADER_DEPTH);
 
-    this.add
-      .text(22, 62, "mouse: steer", { fontFamily: "Arial", fontSize: "15px", color: "#94a3b8" })
-      .setOrigin(0, 0);
-    this.add
-      .text(22, 84, "keyboard: type reply then enter", { fontFamily: "Arial", fontSize: "15px", color: "#94a3b8" })
-      .setOrigin(0, 0);
-    this.add
-      .text(22, 106, "backspace ok wrong letters ok until you send", {
-        fontFamily: "Arial",
-        fontSize: "15px",
-        color: "#94a3b8"
-      })
-      .setOrigin(0, 0);
-    this.add
-      .text(22, 128, "story timer runs for the whole level", {
-        fontFamily: "Arial",
-        fontSize: "15px",
-        color: "#94a3b8"
-      })
-      .setOrigin(0, 0);
+    const hudHint = (x: number, y: number, content: string): void => {
+      const line = this.add
+        .text(x, y, content, { fontFamily: "Arial", fontSize: "15px", color: "#94a3b8" })
+        .setOrigin(0, 0);
+      line.setDepth(HUD_DEPTH);
+    };
+
+    hudHint(22, 62, "mouse: steer");
+    hudHint(22, 84, "keyboard: type reply then enter");
+    hudHint(22, 106, "backspace ok wrong letters ok until you send");
+    hudHint(22, 128, "story timer runs for the whole level");
 
     this.narrativeText = this.add
       .text(22, 156, "", {
@@ -91,6 +87,7 @@ export class GameScene extends Phaser.Scene {
         wordWrap: { width: 285 }
       })
       .setOrigin(0, 0);
+    this.narrativeText.setDepth(HUD_DEPTH);
 
     this.drivingSystem = new DrivingSystem(this, this.roadBounds);
     this.drivingSystem.create();
@@ -115,14 +112,16 @@ export class GameScene extends Phaser.Scene {
         color: "#cbd5e1"
       })
       .setOrigin(0.5, 1);
+    this.statusText.setDepth(HEADER_DEPTH);
 
     this.stressText = this.add
-      .text(width - 20, 62, "", {
+      .text(400, 50, "", {
         fontFamily: "Arial",
         fontSize: "18px",
         color: "#fca5a5"
       })
-      .setOrigin(1, 0);
+      .setOrigin(0.5, 0);
+    this.stressText.setDepth(HEADER_DEPTH);
 
     const startId = data.startLevelId;
     if (startId && !this.progressManager.isUnlocked(startId)) {
