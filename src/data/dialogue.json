@@ -1,30 +1,30 @@
 {
   "first-date": {
-    "intro": "You are driving to meet someone new. Nothing feels urgent yet.",
-    "outro": "You got through the first conversation.",
+    "intro": "you are driving to meet someone new nothing feels urgent yet",
+    "outro": "you got through the first conversation",
     "prompts": [
-      { "incoming": "where are you?", "reply": "On my way.", "timeLimitSeconds": 10.5 },
-      { "incoming": "lol are you late?", "reply": "Almost there.", "timeLimitSeconds": 10 },
-      { "incoming": "what are you wearing", "reply": "Blue jacket.", "timeLimitSeconds": 9.5 }
+      { "incoming": "where are you", "reply": "on my way" },
+      { "incoming": "lol are you late", "reply": "almost there" },
+      { "incoming": "what are you wearing", "reply": "blue jacket" }
     ]
   },
   "marriage": {
-    "intro": "Years later, the tone is tighter. Every delay feels loaded.",
-    "outro": "The argument pauses, but the tension stays.",
+    "intro": "years later the tone is tighter every delay feels loaded",
+    "outro": "the argument pauses but the tension stays",
     "prompts": [
-      { "incoming": "Please confirm your arrival time.", "reply": "I will arrive at 7:10.", "timeLimitSeconds": 9.2 },
-      { "incoming": "Did you read my last message?", "reply": "Yes. I am driving now.", "timeLimitSeconds": 8.7 },
-      { "incoming": "Answer me clearly.", "reply": "I cannot type safely.", "timeLimitSeconds": 8.2 },
-      { "incoming": "Then call me now.", "reply": "Not while driving.", "timeLimitSeconds": 7.8 }
+      { "incoming": "please confirm your arrival time", "reply": "i will arrive at 710" },
+      { "incoming": "did you read my last message", "reply": "yes i am driving now" },
+      { "incoming": "answer me clearly", "reply": "i cannot type safely" },
+      { "incoming": "then call me now", "reply": "not while driving" }
     ]
   },
   "dying-wife": {
-    "intro": "The hospital texts are short. Every second hurts.",
-    "outro": "You keep driving, but something is already slipping away.",
+    "intro": "the hospital texts are short every second hurts",
+    "outro": "you keep driving but something is already slipping away",
     "prompts": [
-      { "incoming": "where are you", "reply": "I am close.", "timeLimitSeconds": 8 },
-      { "incoming": "she is fading", "reply": "Please hold on.", "timeLimitSeconds": 7.6 },
-      { "incoming": "come now", "reply": "I am trying.", "timeLimitSeconds": 7.2 }
+      { "incoming": "where are you", "reply": "i am close" },
+      { "incoming": "she is fading", "reply": "please hold on" },
+      { "incoming": "come now", "reply": "i am trying" }
     ]
   }
 }

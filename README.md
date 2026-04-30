@@ -13,13 +13,16 @@ Scope is deliberately small and centered on validating the core mechanic and emo
 
 ## Core Concept
 
-At all times, the player must:
+At all times during a level, the player must:
 
 - steer a car with the mouse
-- type exact message replies with the keyboard
+- type message replies with the keyboard (submitted with Enter)
+- finish the whole dialogue before the **level story timer** runs out
 - avoid obstacles while managing stress effects
 
-The mechanics remain consistent across three short narrative levels:
+Wrong letters in the text field are not punished until the player presses **Enter** with a non-matching reply.
+
+The mechanics stay consistent across three short narrative levels:
 
 1. First Date
 2. Marriage
@@ -27,46 +30,61 @@ The mechanics remain consistent across three short narrative levels:
 
 ## Features
 
-- Polished in-game UI and HUD with clearer layout and hierarchy
-- Main menu before gameplay
-- Level selection screen with locked/unlocked/completed states
-- Progression gating (Level 1 unlocked by default; later levels unlock in order)
-- Replay support for any unlocked/completed level
-- Game over flow with `Play Again` and `Main Menu`
-- Ending flow after finishing all levels
-- Local progress persistence for unlocked/completed levels
-- Difficulty tuning pass for fairer pacing (still tense, less punishing spiral)
+- Main menu and level select with strict unlock order (derived from completed levels)
+- Per-run **score**, **best score per level** (saved locally on successful clears)
+- **Story timer** per level (whole-segment budget, not per-message typing limits)
+- **Result screen** after success or failure (play again, next level when applicable, main menu)
+- Submit-only typing validation (no per-letter punishment)
+- Local persistence: `localStorage` key `text-drive-progress-v2` (older saves may migrate from v1)
 
 ## Current Game Flow
 
-1. `Main Menu` -> `Play` or `Level Select`
-2. Start selected (or preferred unlocked) level
-3. Drive + type simultaneously through the level prompt queue
-4. On overload -> `Game Over` -> `Play Again` or `Main Menu`
-5. On level completion -> next level unlocks
-6. After final level -> ending screen -> return to main menu
+1. Main menu → Play or Level select
+2. Gameplay: drive, type, beat the story clock, finish all messages
+3. **Result** screen with score and best (success or failure)
+4. Success: optional **Play next level** or **Continue to ending** on the final level
+5. Failure: **Play again** or **Main menu**
 
 ## Controls
 
-- Mouse: steer left/right
-- Keyboard: type exact reply text
-- Enter: submit current reply
-- Backspace: correct typed input
+- Mouse: steer
+- Keyboard: type your reply; **Enter** submits; **Backspace** edits
+- Matching is case-insensitive after trim
 
 ## Progression / Level Unlocks
 
-- Level 1 is unlocked by default
-- Level 2 unlocks after completing Level 1
-- Level 3 unlocks after completing Level 2
-- Any unlocked/completed level can be replayed from Level Select
-- Progress is saved in browser `localStorage` under `text-drive-progress-v1`
+- Level 1 is available from a fresh save
+- Level 2 unlocks only after level 1 is **fully** completed (all dialogue in that level)
+- Level 3 unlocks only after level 2 is fully completed
+- Unlocked levels can be replayed from level select
+- Unlock state is recomputed from the **completed** list so saves stay consistent
+
+## Scoring (high level)
+
+Points for correct sends, clearing the level, leftover story time, and a no-crash bonus.  
+Penalties for wrong Enter submits, crashes, overload failure, and running out of story time.  
+Best score per level updates only on **successful** level completion.
+
+Tune point values in `src/game/managers/RunScore.ts`.  
+Tune per-level **story** time budgets in `src/data/levels.json` (`storyTimeSeconds`).
+
+## Dialogue & content style
+
+- In-game copy in `src/data/dialogue.json` is written **lowercase** with **minimal punctuation** on purpose.
+- Required replies are compared with **trim + lowercase**, so typing capital letters still matches.
+
+## NPM scripts
+
+- `npm run dev` — Vite dev server
+- `npm run build` — TypeScript check + production bundle to `dist/`
+- `npm run preview` — Serve the production build locally
 
 ## Tech Stack
 
 - TypeScript
 - Phaser 3
 - Vite
-- GitHub Actions (for Pages deployment)
+- GitHub Actions (optional Pages deploy)
 
 ## How to Run Locally
 
@@ -79,19 +97,12 @@ Open the local Vite URL (usually `http://localhost:5173`).
 
 ## Live Demo
 
-GitHub Pages is compatible with this project because Vite outputs a static `dist` build.
+GitHub Pages works with the static Vite `dist` output.
 
-- Expected live URL (once Pages is enabled and deploy succeeds):  
-  [https://zxyandreay.github.io/text-drive/](https://zxyandreay.github.io/text-drive/)
-- Automatic deployment workflow is included at `.github/workflows/deploy-pages.yml`.
+- Example URL: [https://zxyandreay.github.io/text-drive/](https://zxyandreay.github.io/text-drive/)
+- Workflow: `.github/workflows/deploy-pages.yml`
 
-To enable it on GitHub:
-
-1. Push `main` with the workflow file included.
-2. In GitHub repository settings, open `Settings -> Pages`.
-3. Under `Build and deployment`, set `Source` to `GitHub Actions`.
-4. Wait for the `Deploy to GitHub Pages` workflow to finish on `main`.
-5. Open the Pages URL shown in repo Pages settings (or the URL above).
+Enable **Settings → Pages → Source: GitHub Actions** on the repository, then push `main` so the workflow can publish.
 
 ## Project Structure
 
@@ -104,12 +115,13 @@ src/
     MainMenuScene.ts
     LevelSelectScene.ts
     GameScene.ts
-    GameOverScene.ts
+    ResultScene.ts
     EndingScene.ts
     managers/
       DialogueManager.ts
       LevelManager.ts
       ProgressManager.ts
+      RunScore.ts
     systems/
       DrivingSystem.ts
       ObstacleSystem.ts
@@ -127,6 +139,12 @@ src/
 ## Future Improvements / Limitations
 
 - No branching narrative or multiple endings
-- No save slots/cloud sync (local browser progress only)
-- Placeholder geometric visuals (no authored art/audio pass yet)
-- Designed as a small prototype focused on one mechanic, not a full content-rich game
+- No cloud sync (local browser only)
+- Placeholder visuals
+- Small scope: one core mechanic, not a full commercial title
+
+## Implementation notes
+
+- **Result flow:** `src/game/ResultScene.ts` records level completion and best score on success; failures do not advance unlocks.
+- **Input:** `TypingSystem` removes its keyboard listener on scene `shutdown` so restarting a level does not stack handlers.
+- **UI buttons:** `UiFactory` uses an interactive rectangle plus separate text so hit areas align with the scaled canvas.

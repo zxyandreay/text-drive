@@ -61,8 +61,8 @@ export class LevelSelectScene extends Phaser.Scene {
         .setOrigin(0.5);
 
       if (unlocked) {
-        card.setInteractive();
-        card.on("pointerdown", () => {
+        card.setInteractive({ useHandCursor: true });
+        card.on("pointerup", () => {
           this.scene.start("GameScene", { startLevelId: level.id });
         });
       }

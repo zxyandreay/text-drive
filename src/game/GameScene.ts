@@ -7,6 +7,7 @@ import { StressSystem } from "./systems/StressSystem";
 import { DialogueManager } from "./managers/DialogueManager";
 import { LevelManager } from "./managers/LevelManager";
 import { ProgressManager } from "./managers/ProgressManager";
+import { RunScore } from "./managers/RunScore";
 import { UiFactory } from "./ui/UiFactory";
 import levelsData from "../data/levels.json";
 import dialogueData from "../data/dialogue.json";
@@ -22,15 +23,19 @@ export class GameScene extends Phaser.Scene {
   private obstacleSystem!: ObstacleSystem;
   private typingSystem!: TypingSystem;
   private stressSystem!: StressSystem;
+  private phoneUI!: PhoneUI;
   private levelManager!: LevelManager;
   private dialogueManager!: DialogueManager;
   private progressManager!: ProgressManager;
+  private runScore!: RunScore;
   private statusText!: Phaser.GameObjects.Text;
   private levelTitleText!: Phaser.GameObjects.Text;
   private narrativeText!: Phaser.GameObjects.Text;
   private stressText!: Phaser.GameObjects.Text;
   private gameOver = false;
   private transitioningLevel = false;
+  private remainingStorySeconds = 0;
+  private crashCount = 0;
 
   constructor() {
     super("GameScene");
@@ -39,6 +44,10 @@ export class GameScene extends Phaser.Scene {
   create(data: GameSceneData): void {
     const { width, height } = this.scale;
     this.cameras.main.setBackgroundColor("#020617");
+    this.gameOver = false;
+    this.transitioningLevel = false;
+    this.crashCount = 0;
+
     UiFactory.createPanel(this, 165, 126, 300, 178, 0.82);
 
     this.levelTitleText = this.add
@@ -50,16 +59,20 @@ export class GameScene extends Phaser.Scene {
       .setOrigin(0.5, 0);
 
     this.add
-      .text(22, 62, "Mouse: steer", { fontFamily: "Arial", fontSize: "15px", color: "#94a3b8" })
+      .text(22, 62, "mouse: steer", { fontFamily: "Arial", fontSize: "15px", color: "#94a3b8" })
       .setOrigin(0, 0);
     this.add
-      .text(22, 84, "Keyboard: exact reply + Enter", { fontFamily: "Arial", fontSize: "15px", color: "#94a3b8" })
+      .text(22, 84, "keyboard: type reply then enter", { fontFamily: "Arial", fontSize: "15px", color: "#94a3b8" })
       .setOrigin(0, 0);
     this.add
-      .text(22, 106, "Backspace is allowed", { fontFamily: "Arial", fontSize: "15px", color: "#94a3b8" })
+      .text(22, 106, "backspace ok wrong letters ok until you send", {
+        fontFamily: "Arial",
+        fontSize: "15px",
+        color: "#94a3b8"
+      })
       .setOrigin(0, 0);
     this.add
-      .text(22, 128, "Mistakes raise stress. Overload ends the run.", {
+      .text(22, 128, "story timer runs for the whole level", {
         fontFamily: "Arial",
         fontSize: "15px",
         color: "#94a3b8"
@@ -79,16 +92,20 @@ export class GameScene extends Phaser.Scene {
     this.drivingSystem.create();
 
     this.obstacleSystem = new ObstacleSystem(this, this.roadBounds);
-    const phoneUI = new PhoneUI(this);
-    this.typingSystem = new TypingSystem(this, phoneUI);
+    this.phoneUI = new PhoneUI(this);
+    this.runScore = new RunScore();
+    this.typingSystem = new TypingSystem(this, this.phoneUI);
+    this.typingSystem.setOnCorrectReply(() => {
+      this.runScore.addCorrectReply();
+    });
     this.typingSystem.create();
-    this.stressSystem = new StressSystem(this, this.drivingSystem, this.obstacleSystem, phoneUI);
+    this.stressSystem = new StressSystem(this, this.drivingSystem, this.obstacleSystem, this.phoneUI);
     this.levelManager = new LevelManager(levelsData as LevelConfig[]);
     this.dialogueManager = new DialogueManager(dialogueData);
     this.progressManager = new ProgressManager(levelsData as LevelConfig[]);
 
     this.statusText = this.add
-      .text(width / 2, height - 20, "Drive and type simultaneously", {
+      .text(width / 2, height - 20, "drive and type at the same time", {
         fontFamily: "Arial",
         fontSize: "17px",
         color: "#cbd5e1"
@@ -103,8 +120,13 @@ export class GameScene extends Phaser.Scene {
       })
       .setOrigin(1, 0);
 
-    if (data.startLevelId && this.progressManager.isUnlocked(data.startLevelId)) {
-      this.levelManager.setCurrentById(data.startLevelId);
+    const startId = data.startLevelId;
+    if (startId && !this.progressManager.isUnlocked(startId)) {
+      this.scene.start("MainMenuScene");
+      return;
+    }
+    if (startId) {
+      this.levelManager.setCurrentById(startId);
     }
     this.startCurrentLevel();
   }
@@ -124,26 +146,38 @@ export class GameScene extends Phaser.Scene {
     );
     this.typingSystem.update(deltaSeconds);
 
+    if (!this.transitioningLevel && !this.typingSystem.isCompleted()) {
+      this.remainingStorySeconds = Math.max(0, this.remainingStorySeconds - deltaSeconds);
+      this.phoneUI.setStoryTimeRemaining(this.remainingStorySeconds);
+      if (this.remainingStorySeconds <= 0) {
+        this.endRun("out of story time");
+        return;
+      }
+    }
+
     const typingIncident = this.typingSystem.pollIncident();
     if (typingIncident) {
+      this.runScore.penalizeWrongSubmit();
       this.stressSystem.applyIncident(typingIncident.reason);
     }
 
     if (this.obstacleSystem.consumeCrashEvent() && this.typingSystem.isUnderPressure()) {
+      this.crashCount += 1;
+      this.runScore.penalizeCrash();
       this.stressSystem.applyIncident("crash");
     }
 
     if (this.typingSystem.isCompleted() && !this.obstacleSystem.isCrashed()) {
-      this.statusText.setText("Conversation complete. Hold the lane.");
+      this.statusText.setText("conversation complete hold the lane");
       this.statusText.setColor("#86efac");
     } else {
-      this.statusText.setText("Stay focused and keep the lane.");
+      this.statusText.setText("stay focused");
       this.statusText.setColor("#cbd5e1");
     }
-    this.stressText.setText(`Stress ${this.stressSystem.getStress()}/${this.stressSystem.getMaxStress()}`);
+    this.stressText.setText(`stress ${this.stressSystem.getStress()}/${this.stressSystem.getMaxStress()}`);
 
     if (this.stressSystem.isOverloaded()) {
-      this.endRun("Cognitive overload");
+      this.endRun("cognitive overload");
       return;
     }
 
@@ -154,10 +188,19 @@ export class GameScene extends Phaser.Scene {
 
   private endRun(reason: string): void {
     this.gameOver = true;
-    this.time.delayedCall(280, () => {
-      this.scene.start("GameOverScene", {
+    if (reason === "cognitive overload") {
+      this.runScore.penalizeOverload();
+    }
+    const level = this.levelManager.getCurrentLevel();
+    const score = this.runScore.getScore();
+    this.time.delayedCall(260, () => {
+      this.scene.start("ResultScene", {
+        outcome: "failure",
+        levelId: level.id,
+        levelTitle: level.title,
+        score,
         reason,
-        levelId: this.levelManager.getCurrentLevel().id
+        nextLevelId: null
       });
     });
   }
@@ -176,31 +219,38 @@ export class GameScene extends Phaser.Scene {
     this.obstacleSystem.resetForLevel();
     this.stressSystem.configureLevel(level.maxStress);
     this.stressSystem.reset();
+    this.runScore.reset();
+    this.crashCount = 0;
+    this.remainingStorySeconds = level.storyTimeSeconds;
+    this.phoneUI.setStoryTimeRemaining(this.remainingStorySeconds);
     this.typingSystem.startLevel(this.dialogueManager.getPrompts(level.id));
     this.transitioningLevel = false;
   }
 
   private handleLevelComplete(): void {
     this.transitioningLevel = true;
-    const currentLevel = this.levelManager.getCurrentLevel();
-    const outro = this.dialogueManager.getOutro(currentLevel.id);
-    this.progressManager.markCompleted(currentLevel.id);
-    this.statusText.setText(outro);
-    this.statusText.setColor("#86efac");
+    this.gameOver = true;
+    const level = this.levelManager.getCurrentLevel();
+    const storyLeft = this.remainingStorySeconds;
 
-    if (!this.levelManager.advanceLevel()) {
-      this.gameOver = true;
-      this.time.delayedCall(900, () => {
-        this.scene.start("EndingScene", {
-          finalMessage:
-            "You made it to the end of the road.\nBut every message demanded attention that driving needed.\nNo reply is worth a life."
-        });
-      });
-      return;
+    this.runScore.addLevelComplete();
+    this.runScore.addTimeBonus(storyLeft);
+    if (this.crashCount === 0) {
+      this.runScore.addNoCrashBonus();
     }
 
-    this.time.delayedCall(1400, () => {
-      this.startCurrentLevel();
+    const score = this.runScore.getScore();
+    const nextLevelId = this.levelManager.getNextLevelId();
+
+    this.time.delayedCall(450, () => {
+      this.scene.start("ResultScene", {
+        outcome: "success",
+        levelId: level.id,
+        levelTitle: level.title,
+        score,
+        reason: undefined,
+        nextLevelId
+      });
     });
   }
 }

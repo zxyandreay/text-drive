@@ -29,6 +29,13 @@ export class LevelManager {
     return this.currentIndex < this.levels.length - 1;
   }
 
+  public getNextLevelId(): string | null {
+    if (!this.hasNextLevel()) {
+      return null;
+    }
+    return this.levels[this.currentIndex + 1].id;
+  }
+
   public advanceLevel(): boolean {
     if (!this.hasNextLevel()) {
       return false;

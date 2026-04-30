@@ -50,12 +50,10 @@ export class StressSystem {
     this.phoneUI.vibrate(0.55);
     this.scene.cameras.main.shake(170, 0.0038);
 
-    if (reason === "timeout") {
-      this.phoneUI.setStatus("Too slow. Focus now.", "#fca5a5");
-    } else if (reason === "wrong_input") {
-      this.phoneUI.setStatus("Wrong text. Panic rising.", "#fca5a5");
+    if (reason === "wrong_input") {
+      this.phoneUI.setStatus("wrong send try again", "#fca5a5");
     } else {
-      this.phoneUI.setStatus("Near miss crash. Keep control.", "#fca5a5");
+      this.phoneUI.setStatus("near miss stay in lane", "#fca5a5");
     }
   }
 
