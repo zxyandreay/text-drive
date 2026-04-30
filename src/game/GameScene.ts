@@ -15,6 +15,16 @@ import levelsData from "../data/levels.json";
 import dialogueData from "../data/dialogue.json";
 import type { LevelConfig } from "./types/LevelTypes";
 
+/** Top gameplay HUD: shared horizontal rhythm (inset from layout marginX). */
+const HUD_BAR_PAD_X = 12;
+const HUD_RIGHT_PAD = 12;
+const HUD_BACK_W = 122;
+const HUD_BACK_H = 36;
+const HUD_GAP_AFTER_BACK = 14;
+const HUD_TITLE_GAP = 14;
+const HUD_STATS_GAP = 20;
+const HUD_STAT_STEP = 108;
+
 type GameSceneData = {
   startLevelId?: string;
 };
@@ -126,7 +136,7 @@ export class GameScene extends Phaser.Scene {
     this.topBarBg.setStrokeStyle(1, 0x334155, 0.75);
     this.topBarBg.setDepth(L.headerDepth - 1);
 
-    this.backHit = this.add.rectangle(0, 0, 100, 34, 0x334155, 0.95);
+    this.backHit = this.add.rectangle(0, 0, HUD_BACK_W, HUD_BACK_H, 0x334155, 0.95);
     this.backHit.setStrokeStyle(1, 0x64748b, 0.85);
     this.backHit.setInteractive({ useHandCursor: true });
     this.backHit.on("pointerup", () => {
@@ -224,32 +234,34 @@ export class GameScene extends Phaser.Scene {
 
   private applyHudLayout(L: GameplayLayoutMetrics): void {
     const rowY = L.topBarTop + L.topBarH * 0.5;
-    const rightPad = L.marginX + 8;
+    const leftInset = L.marginX + HUD_BAR_PAD_X;
+    const rightInset = L.marginX + HUD_RIGHT_PAD;
 
     this.topBarBg.setPosition(L.width * 0.5, L.topBarTop + L.topBarH * 0.5);
     this.topBarBg.width = L.width - L.marginX * 2;
     this.topBarBg.height = L.topBarH;
 
-    const backX = L.marginX + 52;
-    this.backHit.setPosition(backX, rowY);
-    this.backLabel.setPosition(backX, rowY);
+    const backCenterX = leftInset + HUD_BACK_W * 0.5;
+    this.backHit.setPosition(backCenterX, rowY);
+    this.backHit.setSize(HUD_BACK_W, HUD_BACK_H);
+    this.backLabel.setPosition(backCenterX, rowY);
 
-    let x = L.marginX + 118;
-    this.levelTitleText.setPosition(x, rowY);
+    let titleX = backCenterX + HUD_BACK_W * 0.5 + HUD_GAP_AFTER_BACK;
+    this.levelTitleText.setPosition(titleX, rowY);
 
-    x += this.levelTitleText.width + 14;
-    this.progressText.setPosition(x, rowY);
+    titleX += this.levelTitleText.width + HUD_TITLE_GAP;
+    this.progressText.setPosition(titleX, rowY);
 
-    const statsStart = L.width * 0.52;
+    const statsStart = titleX + this.progressText.width + HUD_STATS_GAP;
     this.stressText.setPosition(statsStart, rowY);
-    this.scoreText.setPosition(statsStart + 118, rowY);
-    this.timerText.setPosition(statsStart + 232, rowY);
+    this.scoreText.setPosition(statsStart + HUD_STAT_STEP, rowY);
+    this.timerText.setPosition(statsStart + HUD_STAT_STEP * 2, rowY);
 
-    this.statusText.setPosition(L.width - rightPad, rowY);
+    this.statusText.setPosition(L.width - rightInset, rowY);
 
     const toneY = L.topBarTop + L.topBarH + 6;
-    this.toneText.setPosition(L.marginX + 8, toneY);
-    this.toneText.setWordWrapWidth(Math.max(200, L.width - L.marginX * 2 - 24), true);
+    this.toneText.setPosition(leftInset, toneY);
+    this.toneText.setWordWrapWidth(Math.max(200, L.width - leftInset - rightInset), true);
 
     const hint = L.hintCard;
     this.hintCardBg.setPosition(hint.cx, hint.cy);

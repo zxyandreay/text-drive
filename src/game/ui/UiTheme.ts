@@ -13,8 +13,8 @@ export const UiTheme = {
     success: "#86efac",
     warn: "#fb923c",
     danger: "#f87171",
-    /** Faded expected-reply hint inside the input panel */
-    replyHint: "#64748b",
+    /** Faded expected-reply hint inside the input panel (readable ghost, still dimmer than typed) */
+    replyHint: "#94a3b8",
     /** Typed characters that match expected (case-insensitive) */
     typedCorrect: "#f1f5f9",
     /** Typed characters that do not match at the same index */
