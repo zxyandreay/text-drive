@@ -15,64 +15,71 @@ export class PhoneUI {
 
     const phoneX = 690;
     const phoneY = 300;
-    const phoneWidth = 390;
-    const phoneHeight = 470;
+    const phoneWidth = 370;
+    const phoneHeight = 456;
 
     const frame = scene.add.rectangle(phoneX, phoneY, phoneWidth, phoneHeight, 0x0b1220, 0.95);
     frame.setStrokeStyle(2, 0x334155);
 
-    const header = scene.add.rectangle(phoneX, phoneY - 202, phoneWidth - 14, 46, 0x111827, 1);
+    const header = scene.add.rectangle(phoneX, phoneY - 196, phoneWidth - 14, 50, 0x111827, 1);
     const headerText = scene.add
-      .text(phoneX - 178, phoneY - 216, "Messages", {
+      .text(phoneX - 168, phoneY - 213, "Messages", {
         fontFamily: "Arial",
-        fontSize: "20px",
+        fontSize: "21px",
         color: "#e2e8f0"
       })
       .setOrigin(0, 0);
 
     this.incomingText = scene.add
-      .text(phoneX - 178, phoneY - 168, "", {
+      .text(phoneX - 168, phoneY - 160, "", {
         fontFamily: "Arial",
-        fontSize: "17px",
+        fontSize: "16px",
         color: "#bfdbfe",
-        wordWrap: { width: 350 }
+        wordWrap: { width: 332 }
       })
       .setOrigin(0, 0);
 
     this.targetText = scene.add
-      .text(phoneX - 178, phoneY - 95, "", {
+      .text(phoneX - 168, phoneY - 90, "", {
         fontFamily: "Arial",
         fontSize: "17px",
         color: "#f8fafc",
-        wordWrap: { width: 350 }
+        wordWrap: { width: 332 }
       })
       .setOrigin(0, 0);
 
-    const inputPanel = scene.add.rectangle(phoneX, phoneY + 123, phoneWidth - 24, 170, 0x1e293b, 0.95);
+    const inputPanel = scene.add.rectangle(phoneX, phoneY + 120, phoneWidth - 24, 170, 0x1e293b, 0.95);
     inputPanel.setStrokeStyle(1, 0x475569);
+    const inputLabel = scene.add
+      .text(phoneX - 162, phoneY + 38, "Your reply", {
+        fontFamily: "Arial",
+        fontSize: "14px",
+        color: "#93c5fd"
+      })
+      .setOrigin(0, 0);
     this.vibrationOverlay = scene.add.rectangle(phoneX, phoneY, phoneWidth - 12, phoneHeight - 12, 0xf8fafc, 0);
 
     this.typedText = scene.add
-      .text(phoneX - 170, phoneY + 66, "", {
+      .text(phoneX - 162, phoneY + 62, "", {
         fontFamily: "Consolas, monospace",
-        fontSize: "20px",
+        fontSize: "18px",
         color: "#f8fafc",
-        wordWrap: { width: 340 }
+        wordWrap: { width: 324 }
       })
       .setOrigin(0, 0);
 
     this.statusText = scene.add
-      .text(phoneX - 170, phoneY + 156, "", {
+      .text(phoneX - 162, phoneY + 150, "", {
         fontFamily: "Arial",
-        fontSize: "15px",
+        fontSize: "14px",
         color: "#94a3b8"
       })
       .setOrigin(0, 0);
 
     this.timerText = scene.add
-      .text(phoneX + 170, phoneY + 156, "", {
+      .text(phoneX + 162, phoneY + 150, "", {
         fontFamily: "Arial",
-        fontSize: "15px",
+        fontSize: "14px",
         color: "#fca5a5"
       })
       .setOrigin(1, 0);
@@ -84,6 +91,7 @@ export class PhoneUI {
       this.incomingText,
       this.targetText,
       inputPanel,
+      inputLabel,
       this.vibrationOverlay,
       this.typedText,
       this.statusText,

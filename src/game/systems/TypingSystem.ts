@@ -141,7 +141,7 @@ export class TypingSystem {
 
   private raiseIncident(reason: TypingFailureReason, message: string): void {
     this.acceptingInput = false;
-    this.recoverTimer = 0.9;
+    this.recoverTimer = 0.65;
     this.typedValue = "";
     this.phoneUI.setTypedValue(this.typedValue);
     this.phoneUI.setStatus(message, "#fca5a5");

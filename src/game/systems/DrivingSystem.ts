@@ -27,7 +27,7 @@ export class DrivingSystem {
   }
 
   public create(): void {
-    const { width, height } = this.scene.scale;
+    const { height } = this.scene.scale;
     const roadCenterX = (this.roadBounds.left + this.roadBounds.right) * 0.5;
 
     this.scene.add.rectangle(

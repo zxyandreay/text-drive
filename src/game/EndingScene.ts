@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { UiFactory } from "./ui/UiFactory";
 
 type EndingSceneData = {
   finalMessage?: string;
@@ -43,18 +44,8 @@ export class EndingScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    this.add
-      .text(width / 2, height - 70, "Press R to restart", {
-        fontFamily: "Arial",
-        fontSize: "18px",
-        color: "#93c5fd"
-      })
-      .setOrigin(0.5);
-
-    this.input.keyboard?.once("keydown", (event: KeyboardEvent) => {
-      if (event.key.toLowerCase() === "r") {
-        this.scene.start("GameScene");
-      }
-    });
+    UiFactory.createButton(this, width / 2, height - 92, "Main Menu", () => {
+      this.scene.start("MainMenuScene");
+    }, { width: 220, height: 50, backgroundColor: 0x334155 });
   }
 }

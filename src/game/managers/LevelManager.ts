@@ -8,6 +8,11 @@ export class LevelManager {
     this.levels = levels;
   }
 
+  public setCurrentById(levelId: string): void {
+    const index = this.levels.findIndex((level) => level.id === levelId);
+    this.currentIndex = index >= 0 ? index : 0;
+  }
+
   public getCurrentLevel(): LevelConfig {
     return this.levels[this.currentIndex];
   }

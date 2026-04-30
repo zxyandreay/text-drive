@@ -2,6 +2,9 @@ import Phaser from "phaser";
 import "./style.css";
 import { GameScene } from "./game/GameScene";
 import { EndingScene } from "./game/EndingScene";
+import { MainMenuScene } from "./game/MainMenuScene";
+import { LevelSelectScene } from "./game/LevelSelectScene";
+import { GameOverScene } from "./game/GameOverScene";
 
 const GAME_WIDTH = 900;
 const GAME_HEIGHT = 540;
@@ -12,7 +15,7 @@ const config: Phaser.Types.Core.GameConfig = {
   height: GAME_HEIGHT,
   parent: "app",
   backgroundColor: "#111827",
-  scene: [GameScene, EndingScene],
+  scene: [MainMenuScene, LevelSelectScene, GameScene, GameOverScene, EndingScene],
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH

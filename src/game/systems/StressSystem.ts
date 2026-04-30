@@ -45,10 +45,10 @@ export class StressSystem {
   public applyIncident(reason: StressIncidentReason): void {
     this.stress += 1;
 
-    this.drivingSystem.applySteeringDelay(1.4);
-    this.obstacleSystem.applyTemporarySpeedIncrease(1.8);
-    this.phoneUI.vibrate(0.9);
-    this.scene.cameras.main.shake(260, 0.006);
+    this.drivingSystem.applySteeringDelay(0.95);
+    this.obstacleSystem.applyTemporarySpeedIncrease(1.2, 1.14);
+    this.phoneUI.vibrate(0.55);
+    this.scene.cameras.main.shake(170, 0.0038);
 
     if (reason === "timeout") {
       this.phoneUI.setStatus("Too slow. Focus now.", "#fca5a5");
