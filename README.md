@@ -2,171 +2,219 @@
 
 Small narrative-driven browser game prototype about the danger of texting while driving.
 
-## Short Description
+## Short description
 
-`TEXT DRIVE` is a focused Phaser 3 prototype built to demonstrate one core experience: simultaneous driving and exact-text typing under pressure. It prioritizes the emotional tension of split attention over feature breadth.
+`TEXT DRIVE` is a focused Phaser 3 prototype built around one core experience: **simultaneous driving and exact-text typing under pressure**. It emphasizes the emotional tension of split attention over feature breadth.
 
-## Prototype Note
+## Prototype note
 
-This project is intentionally a prototype, not a full commercial game.  
-Scope is deliberately small and centered on validating the core mechanic and emotional arc with a polished, playable vertical slice.
+This project is intentionally a **prototype**, not a full commercial game. Scope stays small: validate the core mechanic and emotional arc with a polished, playable vertical slice.
 
-## Core Concept
+## Core concept
 
-At all times during a level, the player must:
+During a level the player must:
 
-- steer a car with the mouse
-- type message replies with the keyboard (submitted with Enter)
-- finish the whole dialogue before the **level story timer** runs out
-- avoid obstacles while managing stress effects
+- **Steer** the car with the **mouse**
+- **Type** message replies with the **keyboard** and submit with **Enter**
+- **Finish the whole dialogue** before the **level story timer** expires
+- **Avoid obstacles** while **stress** affects the run
 
-Wrong letters in the text field are not punished until the player presses **Enter** with a non-matching reply.
+Wrong letters are not judged until the player presses **Enter** with a reply that does not match the expected text (after trim; matching is case-insensitive).
 
-The mechanics stay consistent across three short narrative levels:
+There are **three** narrative levels (in order):
 
-1. First Date
-2. Marriage
-3. Hospital
+1. **Level 1: First Date** (`first-date`)
+2. **Level 2: Marriage** (`marriage`)
+3. **Level 3: Hospital** (`dying-wife` — internal id used in data and pacing)
 
 ## Features
 
-- Main menu and level select with strict unlock order (derived from completed levels)
-- Per-run **score**, **best score per level** (saved locally on successful clears)
-- **Story timer** per level (whole-segment budget, not per-message typing limits)
-- **Level intro narration** before gameplay starts (fade-in context + continue)
-- **Two-step result flow**: score first, then short success/failure aftermath context
-- Submit-only typing validation (no per-letter punishment)
-- Local persistence: `localStorage` key `text-drive-progress-v2` (older saves may migrate from v1)
-- **Phone messaging UI**: scrollable chat thread with partner (left) and player (right) bubbles, optional typing indicator, and per-level message pacing (delays between incoming text, hint reveal, send beat, and next message). Reply hints and colored typed text share the same monospace layout.
-- **Reply box wrapping**: word-aware line breaks (wraps at spaces; splits mid-word only when a single token is wider than the reply area). Implemented in `src/game/ui/typingHighlightLayout.ts`.
+- **Main menu** with large **Teko** wordmark, **Inter** UI, flat night-road backdrop, faint horizon / lane perspective, and **animated centerline dashes** (forward scroll). **START** goes to level select.
+- **Level select** with **LEVEL SELECT** heading; cards show title, tone, and **Completed / Unlocked / Locked** badges.
+- **Strict linear unlocks**: only **level 1** is available on a fresh save; completing level *n* unlocks level *n*+1. Progress is stored as an ordered **completed** list; **`ProgressManager`** recomputes unlocks and **coerces** saves to a valid prefix so out-of-order completion data cannot unlock later levels early.
+- **Per-run score** and **best score per level** (updated on **successful** clears only); persisted under **`text-drive-progress-v2`** in `localStorage` (migrates from legacy `text-drive-progress-v1` if present).
+- **Story timer** per level (whole-level budget, not per-message caps); values in `src/data/levels.json` (`storyTimeSeconds`).
+- **Level intro narration** (full-screen overlay: title, body, hint to continue; optional **← levels** back to level select).
+- **Two-step result flow**: score card first (**← level select** in the corner), then **aftermath** copy with primary/secondary actions (e.g. **play next level**, **play again**, **main menu**, **continue to ending** on final success).
+- **Narrative text layout**: intro bodies and result **aftermath** / **failure reason** use **measurement-based word wrap** (`src/game/ui/narrativeLayout.ts`) so line length matches Phaser text metrics; column width is capped for readability and scales with panel width.
+- **Phone messaging UI**: scrollable chat (partner / player bubbles), optional typing indicator, per-level pacing in `src/game/ui/messagePacing.ts` (keys: `first-date`, `marriage`, `dying-wife`). Reply hints and typed feedback use shared monospace layout logic in `src/game/ui/typingHighlightLayout.ts` (word-aware wrapping).
+- **Typography**: [Google Fonts](https://fonts.google.com/) **Teko** (700) for display titles / wordmark; **Inter** for UI and body. `src/main.ts` waits on `document.fonts.load` / `document.fonts.ready` before booting Phaser to reduce font flash. **Note:** Phaser `Text` must use `fontFamily` + `fontSize` + `fontStyle` (or a 3-token `font` string) — the engine’s `font` shorthand parser breaks stacks like `Teko, sans-serif`.
 
-## Current Game Flow
+## Current game flow
 
-1. Main menu → Play or Level select
-2. **Level intro** narration appears before each run (including replays)
-3. Gameplay: drive, type, beat the story clock, finish all messages
-4. **Result** score screen (success or failure)
-5. **Aftermath** screen with short post-level story context based on success/failure
-6. Success: optional **Play next level** or **Continue to ending** on the final level
-7. Failure: **Play again** or **Main menu**
+1. **Main menu** → **START**
+2. **Level select** → choose an **unlocked** level (or **Back** to main menu)
+3. **Level intro** narration → continue (space / enter / click, or backdrop)
+4. **Gameplay**: drive, type, beat the story clock, finish all messages
+5. **Result** (e.g. *level complete* / *run ended*): score, optional failure reason → **continue**
+6. **Aftermath**: short outcome copy → **play next level** / **play again** / **main menu** / **continue to ending** (final level success)
+7. **Ending** scene (optional) → **Main menu**
 
 ## Controls
 
-- Mouse: steer
-- Keyboard: type your reply; **Enter** submits; **Backspace** edits
-- Matching is case-insensitive after trim
+- **Mouse**: steer
+- **Keyboard**: type replies; **Enter** submits; **Backspace** edits
+- Matching: **trim** + **case-insensitive** for required replies
 
-## Progression / Level Unlocks
+## Progression / level unlocks
 
-- Level 1 is available from a fresh save
-- Level 2 unlocks only after level 1 is **fully** completed (all dialogue in that level)
-- Level 3 unlocks only after level 2 is fully completed
-- Unlocked levels can be replayed from level select
-- Unlock state is recomputed from the **completed** list so saves stay consistent
+- **First launch**: only **level 1** is unlocked.
+- **Level 2** unlocks after level 1 is **completed** (successful run that records completion in `ResultScene`).
+- **Level 3** unlocks after level 2 is completed.
+- Unlocked levels can be replayed from level select.
+- **`GameScene`** rejects a `startLevelId` that is not unlocked.
 
 ## Scoring (high level)
 
-Points for correct sends, clearing the level, leftover story time, and a no-crash bonus.  
-Penalties for wrong Enter submits, crashes, overload failure, and running out of story time.  
-Best score per level updates only on **successful** level completion.
-
-Tune point values in `src/game/managers/RunScore.ts`.  
-Tune per-level **story** time budgets in `src/data/levels.json` (`storyTimeSeconds`).
+Points for correct sends, clearing the level, leftover story time, and a no-crash bonus. Penalties for wrong **Enter** submits, crashes, overload failure, and story timeout. Tune values in `src/game/managers/RunScore.ts`.
 
 ## Narrative & content style
 
-- In-game copy is written **lowercase** with **minimal punctuation** on purpose.
-- Level setup in `src/data/levels.json` includes `introNarration` (short context lines shown pre-level).
-- Dialogue and outcome text in `src/data/dialogue.json` include:
-  - in-level `prompts`
-  - `outcome.success` aftermath lines
-  - `outcome.failure` aftermath lines
-- Required replies are compared with **trim + lowercase**, so typing capital letters still matches.
+- Copy is mostly **lowercase** with **minimal punctuation** by design.
+- `src/data/levels.json`: `introNarration` arrays for pre-level screens; `title` is the player-facing level name.
+- `src/data/dialogue.json`: in-level `prompts`, `outcome.success` / `outcome.failure` aftermath lines, etc.
 
 ## NPM scripts
 
-- `npm run dev` — Vite dev server
-- `npm run build` — TypeScript check + production bundle to `dist/`
-- `npm run preview` — Serve the production build locally
-- `npm run gh -- …` — (Windows) forwards arguments to [GitHub CLI](https://cli.github.com/) after syncing PATH via [`scripts/invoke-gh.ps1`](scripts/invoke-gh.ps1). Example: `npm run gh -- pr create --fill`
+| Script | Description |
+|--------|-------------|
+| `npm run dev` | Vite dev server (opens browser via `vite.config.ts`) |
+| `npm run build` | `tsc` + production bundle to `dist/` |
+| `npm run preview` | Serve the production build locally |
+| `npm run gh -- …` | Windows: runs GitHub CLI via [`scripts/invoke-gh.ps1`](scripts/invoke-gh.ps1) |
 
-## Tech Stack
+## Tech stack
 
-- TypeScript
-- Phaser 3
-- Vite
-- GitHub Actions (optional Pages deploy)
+- **TypeScript** (~5.9)
+- **Phaser 3** (~3.90)
+- **Vite** (~5.4)
 
-## How to Run Locally
+## How to run locally
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open the local Vite URL (usually `http://localhost:5173`).
+Use the URL Vite prints (typically `http://localhost:5173`).
 
-## Live Demo
+## Live demo (GitHub Pages)
 
-GitHub Pages works with the static Vite `dist` output.
+Static export is built with:
 
-- Example URL: [https://zxyandreay.github.io/text-drive/](https://zxyandreay.github.io/text-drive/)
-- Workflow: `.github/workflows/deploy-pages.yml`
+```bash
+npm run build
+```
 
-Enable **Settings → Pages → Source: GitHub Actions** on the repository, then push `main` so the workflow can publish.
+For this repo, CI sets `VITE_BASE_PATH` to `/<repository-name>/` so assets resolve on Pages.
 
-## Project Structure
+- Example: [https://zxyandreay.github.io/text-drive/](https://zxyandreay.github.io/text-drive/)
+- Workflow: [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml) (on push to **`main`** or manual **workflow_dispatch**)
+
+In the repo **Settings → Pages**, set the source to **GitHub Actions** if needed.
+
+## Runtime / layout
+
+- Fixed game size **900×540**; `Phaser.Scale.FIT` + center in [`src/main.ts`](src/main.ts).
+- Shared colors and type tokens: [`src/game/ui/UiTheme.ts`](src/game/ui/UiTheme.ts).
+- Buttons: [`src/game/ui/UiFactory.ts`](src/game/ui/UiFactory.ts) — rectangle hit area + separate label text for reliable picking under scale.
+
+## Project structure
+
+Top-level layout of the **tracked** source (no `node_modules` / `dist`). Comments describe what each part owns.
 
 ```text
+# --- CI / deployment ---
+# GitHub Actions workflow: npm ci, build with VITE_BASE_PATH, upload dist, deploy Pages.
+.github/workflows/
+  deploy-pages.yml
+
+# --- Root tooling & HTML shell ---
+# package.json — npm scripts (dev, build, preview, gh), Phaser + devDependencies.
+# package-lock.json — reproducible install tree for npm ci (used in CI).
+# tsconfig.json — TypeScript compiler options for the app.
+# vite.config.ts — base URL from VITE_BASE_PATH (local “/”, Pages “/<repo>/”), dev server open.
+# index.html — Google Fonts links, hidden font-priming span, <div id="app"> for Phaser parent.
+# README.md — this documentation.
+# .gitignore — excludes node_modules, dist, .DS_Store, *.local.
+package.json
+package-lock.json
+tsconfig.json
+vite.config.ts
+index.html
+README.md
+.gitignore
+
+# --- Helper scripts ---
+# Windows: prepends common install paths so `gh` works when PATH is trimmed (agents, minimal shells).
 scripts/
-  invoke-gh.ps1          # Windows helper so GitHub CLI works when PATH is trimmed (e.g. some agent shells)
+  invoke-gh.ps1
+
+# --- Application entry & global CSS ---
+# main.ts — async font load, Phaser.Game config (900×540, FIT, center), scene list & boot order.
+# style.css — page/body styles around the canvas (not in-canvas Phaser styling).
 src/
+  main.ts
+  style.css
+
+  # --- Static narrative & tuning data (loaded at runtime) ---
+  # levels.json — per-level id, title, tone, introNarration[], road/story timers, stress cap, speeds.
+  # dialogue.json — prompts, expected replies, outcomes (success/failure aftermath), level-keyed threads.
   data/
     dialogue.json
     levels.json
+
+  # --- Phaser scenes & gameplay modules ---
   game/
-    MainMenuScene.ts
-    LevelSelectScene.ts
-    GameScene.ts
-    ResultScene.ts
-    EndingScene.ts
+    # Scene flow: menu → select → (intro) → play → result → ending; see Current game flow in this README.
+    MainMenuScene.ts      # Wordmark, road backdrop + animated dashes, START → LevelSelectScene.
+    LevelSelectScene.ts   # LEVEL SELECT grid/cards, unlock badges, launch GameScene with level id.
+    GameScene.ts          # Imports levels.json + dialogue.json; main loop: road + phone UI, systems, intro gate, timer.
+    ResultScene.ts        # Two-step UI: score card, then aftermath; writes progress/best on success.
+    EndingScene.ts        # Short closing beat after final level success → back to main menu.
+
+    # managers/ — state that spans UI and systems (data, dialogue, persistence, scoring).
     managers/
-      DialogueManager.ts
-      LevelManager.ts
-      ProgressManager.ts
-      RunScore.ts
+      DialogueManager.ts  # In-memory dialogue API: prompts, outcome lines, outro by level id (data wired in GameScene).
+      LevelManager.ts       # Ordered LevelConfig list, current index, set-by-id, next level id, advance helpers.
+      ProgressManager.ts    # localStorage text-drive-progress-v2, v1 migration, unlocks, ordered completion.
+      RunScore.ts           # Point rules: correct sends, time left, penalties, level clear bonus.
+
+    # systems/ — per-frame or input-driven gameplay pieces used by GameScene.
     systems/
-      DrivingSystem.ts
-      ObstacleSystem.ts
-      StressSystem.ts
-      TypingSystem.ts
+      DrivingSystem.ts      # Mouse steering, car position/limits vs road.
+      ObstacleSystem.ts     # Spawn cadence, movement, collision with player.
+      StressSystem.ts       # Stress from pressure/crashes; overload can end the run.
+      TypingSystem.ts       # Keyboard + reply buffer, per-prompt pacing (incoming/hint/send), Enter to validate/send.
+
+    # types/ — shared TypeScript shapes for levels and related JSON.
     types/
-      LevelTypes.ts
+      LevelTypes.ts         # Level definition types aligned with levels.json.
+
+    # ui/ — reusable layout, phone thread, buttons, and typography tokens (no Phaser “Scene” classes).
     ui/
-      ChatBubbleRow.ts       # Partner / player / typing row factories for the phone thread
-      GameplayLayout.ts      # Road / phone layout metrics
-      LevelIntroOverlay.ts
-      messagePacing.ts       # Per-level incoming/hint/send delays
-      PhoneUI.ts             # Phone chrome, chat thread, reply strip, status
-      typingHighlightLayout.ts  # Monospace wrap + per-character positions for hint vs typed line
-      UiFactory.ts
-      UiTheme.ts
-  main.ts
-  style.css
+      ChatBubbleRow.ts      # Factory helpers for partner bubbles, player bubbles, typing indicator row.
+      GameplayLayout.ts     # Metrics for road strip vs phone panel, safe areas, reply box geometry.
+      LevelIntroOverlay.ts  # Full-screen intro (title, body, continue, optional ← levels).
+      messagePacing.ts      # Per-level delays (incoming, hint, send beat) keyed by level id.
+      narrativeLayout.ts    # Measured word wrap for intro/result prose (column width vs panel).
+      PhoneUI.ts            # Phone chrome, scrollable chat, reply field visuals, status line.
+      typingHighlightLayout.ts  # Monospace line wrap + character positions for hint vs typed overlay.
+      UiFactory.ts          # Buttons, panels, hit rectangles + labels (reliable picking under scale).
+      UiTheme.ts            # Colors, font sizes, spacing tokens shared across scenes.
 ```
 
-## Future Improvements / Limitations
+## Future improvements / limitations
 
-- No branching narrative or multiple endings
+- No branching narrative beyond success/failure outcomes
 - No cloud sync (local browser only)
-- Placeholder visuals
-- Small scope: one core mechanic, not a full commercial title
+- Stylized but simple visuals
+- Single core mechanic — not a full commercial title
 
 ## Implementation notes
 
-- **Result flow:** `src/game/ResultScene.ts` records completion/best on success, then shows a short aftermath step before action buttons.
-- **Narration flow:** `src/game/ui/LevelIntroOverlay.ts` shows pre-level context; `GameScene` gates timer and typing until intro dismissal.
-- **Input:** `TypingSystem` removes its keyboard listener on scene `shutdown` so restarting a level does not stack handlers.
-- **UI buttons:** `UiFactory` uses an interactive rectangle plus separate text so hit areas align with the scaled canvas.
-- **Messaging:** `TypingSystem` sequences each prompt (incoming delay, optional typing row, partner bubble, hint delay, reply hint, compose gate, send beat, player bubble, next prompt). `PhoneUI` keeps `chatHistory` and rebuilds the thread on resize. Pacing presets live in `src/game/ui/messagePacing.ts` (keys: `first-date`, `marriage`, `dying-wife`).
-- **Driving pressure:** `isUnderPressure()` stays true until the level dialogue is fully completed so stress/crash coupling does not drop between messages.
+- **Boot:** async font loading in `main.ts` before `new Phaser.Game(config)`.
+- **Results:** `ResultScene` records completion and best score on success; explicit vertical gaps between copy blocks and buttons (`GAP_TEXT_TO_BTN`, `BTN_GAP`).
+- **Intro:** `LevelIntroOverlay` gates start; `GameScene` starts the story clock after dismissal.
+- **Input:** `TypingSystem` removes keyboard listeners on scene `shutdown` to avoid duplicate handlers.
+- **Driving pressure:** stress coupling stays active until dialogue is fully complete (`isUnderPressure()` in gameplay code paths).
