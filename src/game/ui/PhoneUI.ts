@@ -69,7 +69,6 @@ export class PhoneUI {
 
     this.threadClipRoot = scene.add.container(0, 0);
     this.threadViewportMaskGraphics = scene.add.graphics();
-    this.threadViewportMaskGraphics.setVisible(false);
     this.threadContent = scene.add.container(0, 0);
     this.threadClipRoot.addAt(this.threadViewportMaskGraphics, 0);
     this.threadClipRoot.add(this.threadContent);
@@ -179,7 +178,8 @@ export class PhoneUI {
     const h = this.threadViewportH;
     const g = this.threadViewportMaskGraphics;
     g.clear();
-    g.fillStyle(0xffffff, 1);
+    // Same base tint as phone frame so viewport gutters match the panel; mask must stay visible for WebGL stencil.
+    g.fillStyle(0x0b1220, 0.92);
     g.fillRect(0, 0, w, h);
     if (!this.threadViewportGeometryMask) {
       this.threadViewportGeometryMask = g.createGeometryMask();
