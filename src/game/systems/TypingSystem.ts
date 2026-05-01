@@ -39,6 +39,8 @@ export class TypingSystem {
   private sendBeatTimer?: Phaser.Time.TimerEvent;
   private nextExchangeTimer?: Phaser.Time.TimerEvent;
 
+  private gameplayInputBlocked = false;
+
   constructor(scene: Phaser.Scene, phoneUI: PhoneUI) {
     this.scene = scene;
     this.phoneUI = phoneUI;
@@ -100,6 +102,25 @@ export class TypingSystem {
 
   public update(_deltaSeconds: number): void {
     // Per-reply timers removed; story timer lives in GameScene.
+  }
+
+  /** When true, reply typing (including Enter/Backspace) is ignored — used during gameplay pause. */
+  public setGameplayInputBlocked(blocked: boolean): void {
+    this.gameplayInputBlocked = blocked;
+  }
+
+  /** Pause/resume message-exchange timers without removing them (gameplay pause). */
+  public setExchangeTimersPaused(paused: boolean): void {
+    const setPaused = (ev?: Phaser.Time.TimerEvent): void => {
+      if (ev) {
+        ev.paused = paused;
+      }
+    };
+    setPaused(this.incomingDelayTimer);
+    setPaused(this.typingIndicatorTimer);
+    setPaused(this.hintRevealTimer);
+    setPaused(this.sendBeatTimer);
+    setPaused(this.nextExchangeTimer);
   }
 
   private scheduleHintReveal(gen: number, prompt: DialoguePrompt): void {
@@ -184,6 +205,10 @@ export class TypingSystem {
   }
 
   private handleKeyDown(event: KeyboardEvent): void {
+    if (this.gameplayInputBlocked) {
+      return;
+    }
+
     if (!this.isUnderPressure()) {
       return;
     }
