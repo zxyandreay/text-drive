@@ -395,10 +395,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private getPauseOverlayOptions() {
-    const level = this.levelManager.getCurrentLevel();
     return {
-      levelTitle: level.title,
-      introLines: level.introNarration,
       onResume: () => {
         this.resumeGameplay();
       },
@@ -413,16 +410,6 @@ export class GameScene extends Phaser.Scene {
         this.gameOver = true;
         this.flowState = "ending";
         this.scene.start("MainMenuScene");
-      },
-      onRestart: () => {
-        this.resumeGameplay();
-        this.pendingFlowTimer?.remove();
-        this.pendingFlowTimer = undefined;
-        this.gameOver = false;
-        this.transitioningLevel = false;
-        this.configureLevel();
-        this.applyHudLayout(this.layout);
-        this.showLevelIntro();
       }
     };
   }
