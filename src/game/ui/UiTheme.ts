@@ -30,6 +30,27 @@ export const UiTheme = {
     hint: "12px",
     phoneHeader: "18px",
     phoneBody: "14px",
-    phoneMono: "16px"
+    phoneMono: "16px",
+    /** Result / aftermath score screen */
+    resultHeadline: "34px",
+    resultLevelTitle: "21px",
+    resultScore: "26px",
+    resultBest: "18px",
+    resultAfterTitle: "24px",
+    resultBody: "17px",
+    resultReason: "16px",
+    resultButton: "18px",
+    resultNav: "14px",
+    /** Default menu / generic buttons (not result screen). */
+    buttonDefault: "20px"
+  },
+  /** Filled / outline button presets for result screens (hex stroke for Phaser lineStyle). */
+  buttons: {
+    primaryFill: 0x1d4ed8,
+    primaryStroke: 0x93c5fd,
+    secondaryFill: 0x334155,
+    secondaryStroke: 0x64748b,
+    ghostFill: 0x1e293b,
+    ghostStroke: 0x475569
   }
 } as const;

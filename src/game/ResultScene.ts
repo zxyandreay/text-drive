@@ -3,6 +3,7 @@ import levelsData from "../data/levels.json";
 import type { LevelConfig } from "./types/LevelTypes";
 import { ProgressManager } from "./managers/ProgressManager";
 import { UiFactory } from "./ui/UiFactory";
+import { UiTheme } from "./ui/UiTheme";
 
 export type ResultSceneData = {
   outcome: "success" | "failure";
@@ -16,48 +17,86 @@ export type ResultSceneData = {
 
 type ResultFlowPhase = "result" | "aftermath";
 
+const MARGIN_OUTER = 24;
+const PAD_X = 28;
+const PAD_Y = 24;
+const NAV_W = 220;
+const NAV_H = 40;
+const GAP_AFTER_NAV = 18;
+const GAP_SM = 8;
+const GAP_MD = 12;
+const GAP_LG = 18;
+const BTN_W = 272;
+const BTN_H = 48;
+const BTN_GAP = 12;
+const PANEL_H = 480;
+const PANEL_MAX_W = 600;
+
 export class ResultScene extends Phaser.Scene {
   private dataPayload!: ResultSceneData;
   private phase: ResultFlowPhase = "result";
   private basePanel!: Phaser.GameObjects.Rectangle;
-  private chromeDepth = 30;
   private phaseRoot!: Phaser.GameObjects.Container;
+  private panelW = PANEL_MAX_W;
+  private exiting = false;
 
   constructor() {
     super("ResultScene");
   }
 
+  init(): void {
+    this.exiting = false;
+  }
+
   create(data: ResultSceneData): void {
     this.dataPayload = data;
     this.phase = "result";
+    this.exiting = false;
     const { width, height } = this.scale;
-    this.cameras.main.setBackgroundColor("#020617");
+    this.cameras.main.setBackgroundColor(UiTheme.colors.bg);
 
-    this.basePanel = UiFactory.createPanel(this, width / 2, height / 2, 600, 460, 0.92);
+    this.panelW = Math.min(PANEL_MAX_W, width - MARGIN_OUTER * 2);
+    const cx = width / 2;
+    const cy = height / 2;
+
+    this.basePanel = UiFactory.createPanel(this, cx, cy, this.panelW, PANEL_H, 0.92);
     this.basePanel.setDepth(0);
 
-    const backY = 52;
-    const backX = 96;
-    const backBg = this.add.rectangle(backX, backY, 132, 40, 0x334155, 0.95);
-    backBg.setStrokeStyle(1, 0x64748b, 0.9);
-    backBg.setInteractive({ useHandCursor: true });
-    backBg.setDepth(this.chromeDepth);
-    const backLabel = this.add
-      .text(backX, backY, "← level select", {
-        fontFamily: "Arial",
-        fontSize: "15px",
-        color: "#e2e8f0"
-      })
-      .setOrigin(0.5);
-    backLabel.setDepth(this.chromeDepth + 1);
-    backBg.on("pointerup", () => {
-      this.scene.start("LevelSelectScene");
-    });
-
-    this.phaseRoot = this.add.container(0, 0);
+    this.phaseRoot = this.add.container(cx, cy);
     this.phaseRoot.setDepth(10);
 
     this.renderResultPhase();
+  }
+
+  /** Prevents double pointerup / stacked navigations. */
+  private goScene(key: string, data?: Record<string, unknown>): void {
+    if (this.exiting) {
+      return;
+    }
+    this.exiting = true;
+    if (data !== undefined) {
+      this.scene.start(key, data);
+    } else {
+      this.scene.start(key);
+    }
+  }
+
+  private textWrapWidth(): number {
+    return Math.max(200, this.panelW - PAD_X * 2);
+  }
+
+  /** Top-of-card ghost control; local coords inside phaseRoot. */
+  private addLevelSelectNav(container: Phaser.GameObjects.Container): void {
+    const navCx = -this.panelW / 2 + PAD_X + NAV_W / 2;
+    const navCy = -PANEL_H / 2 + PAD_Y + NAV_H / 2;
+    UiFactory.createButtonInContainer(container, this, navCx, navCy, "← level select", () => {
+      this.goScene("LevelSelectScene");
+    }, {
+      variant: "ghost",
+      width: NAV_W,
+      height: NAV_H,
+      labelFontSize: UiTheme.sizes.resultNav
+    });
   }
 
   private clearPhaseRoot(): void {
@@ -70,7 +109,6 @@ export class ResultScene extends Phaser.Scene {
     }
     this.clearPhaseRoot();
     const data = this.dataPayload;
-    const { width } = this.scale;
     const progress = new ProgressManager(levelsData as LevelConfig[]);
     let bestShown: number;
 
@@ -81,70 +119,82 @@ export class ResultScene extends Phaser.Scene {
       bestShown = progress.getBestScore(data.levelId);
     }
 
+    let y = -PANEL_H / 2 + PAD_Y + NAV_H + GAP_AFTER_NAV;
+
     const headline = data.outcome === "success" ? "level complete" : "run ended";
-    const headlineColor = data.outcome === "success" ? "#86efac" : "#fca5a5";
+    const headlineColor = data.outcome === "success" ? UiTheme.colors.success : UiTheme.colors.stress;
 
     const headlineText = this.add
-      .text(width / 2, 108, headline, {
-        fontFamily: "Arial",
-        fontSize: "42px",
+      .text(0, y, headline, {
+        fontFamily: UiTheme.fontFamily,
+        fontSize: UiTheme.sizes.resultHeadline,
         color: headlineColor
       })
-      .setOrigin(0.5);
+      .setOrigin(0.5, 0);
+    y += headlineText.height + GAP_MD;
 
     const levelTitleText = this.add
-      .text(width / 2, 162, data.levelTitle, {
-        fontFamily: "Arial",
-        fontSize: "22px",
-        color: "#e2e8f0"
+      .text(0, y, data.levelTitle, {
+        fontFamily: UiTheme.fontFamily,
+        fontSize: UiTheme.sizes.resultLevelTitle,
+        color: UiTheme.colors.title
       })
-      .setOrigin(0.5);
+      .setOrigin(0.5, 0);
+    y += levelTitleText.height + GAP_MD;
 
     let reasonText: Phaser.GameObjects.Text | null = null;
     if (data.outcome === "failure" && data.reason) {
       reasonText = this.add
-        .text(width / 2, 204, data.reason, {
-          fontFamily: "Arial",
-          fontSize: "18px",
-          color: "#94a3b8",
+        .text(0, y, data.reason, {
+          fontFamily: UiTheme.fontFamily,
+          fontSize: UiTheme.sizes.resultReason,
+          color: UiTheme.colors.muted,
           align: "center",
-          wordWrap: { width: 520 }
+          wordWrap: { width: this.textWrapWidth() },
+          lineSpacing: 4
         })
-        .setOrigin(0.5);
+        .setOrigin(0.5, 0);
+      y += reasonText.height + GAP_LG;
     }
 
     const scoreText = this.add
-      .text(width / 2, 252, `score ${data.score}`, {
-        fontFamily: "Arial",
-        fontSize: "28px",
+      .text(0, y, `score ${data.score}`, {
+        fontFamily: UiTheme.fontFamily,
+        fontSize: UiTheme.sizes.resultScore,
         color: "#f8fafc"
       })
-      .setOrigin(0.5);
+      .setOrigin(0.5, 0);
+    y += scoreText.height + GAP_SM;
 
     const bestText = this.add
-      .text(width / 2, 294, `best ${bestShown}`, {
-        fontFamily: "Arial",
-        fontSize: "20px",
-        color: "#93c5fd"
+      .text(0, y, `best ${bestShown}`, {
+        fontFamily: UiTheme.fontFamily,
+        fontSize: UiTheme.sizes.resultBest,
+        color: UiTheme.colors.accent
       })
-      .setOrigin(0.5);
+      .setOrigin(0.5, 0);
+    y += bestText.height + GAP_LG;
 
     this.phaseRoot.add(headlineText);
     this.phaseRoot.add(levelTitleText);
-    this.phaseRoot.add(scoreText);
-    this.phaseRoot.add(bestText);
     if (reasonText) {
       this.phaseRoot.add(reasonText);
     }
+    this.phaseRoot.add(scoreText);
+    this.phaseRoot.add(bestText);
 
-    UiFactory.createButtonInContainer(this.phaseRoot, this, width / 2, 350, "continue", () => {
-      if (this.phase !== "result") {
+    const bottomSpace = PANEL_H / 2 - PAD_Y;
+    const continueY = Math.min(y + GAP_MD, bottomSpace - BTN_H / 2);
+    UiFactory.createButtonInContainer(this.phaseRoot, this, 0, continueY, "continue", () => {
+      if (this.phase !== "result" || this.exiting) {
         return;
       }
       this.phase = "aftermath";
       this.clearPhaseRoot();
       this.renderAftermathPhase();
-    });
+    }, { variant: "primary", width: BTN_W, height: BTN_H });
+
+    this.addLevelSelectNav(this.phaseRoot);
   }
 
   private renderAftermathPhase(): void {
@@ -153,68 +203,77 @@ export class ResultScene extends Phaser.Scene {
     }
     this.clearPhaseRoot();
     const data = this.dataPayload;
-    const { width } = this.scale;
     const title = data.outcome === "success" ? "what happened after" : "what followed";
     const bodyLines =
       data.aftermathLines.length > 0
         ? data.aftermathLines
         : ["you take a breath and the story keeps moving", "you can choose what to do next"];
 
+    let y = -PANEL_H / 2 + PAD_Y + NAV_H + GAP_AFTER_NAV;
+
     const titleText = this.add
-      .text(width / 2, 120, title, {
-        fontFamily: "Arial",
-        fontSize: "30px",
-        color: "#e2e8f0"
+      .text(0, y, title, {
+        fontFamily: UiTheme.fontFamily,
+        fontSize: UiTheme.sizes.resultAfterTitle,
+        color: UiTheme.colors.title
       })
-      .setOrigin(0.5);
+      .setOrigin(0.5, 0);
+    y += titleText.height + GAP_LG;
 
     const bodyText = this.add
-      .text(width / 2, 212, bodyLines.join("\n\n"), {
-        fontFamily: "Arial",
-        fontSize: "18px",
-        color: "#cbd5e1",
+      .text(0, y, bodyLines.join("\n\n"), {
+        fontFamily: UiTheme.fontFamily,
+        fontSize: UiTheme.sizes.resultBody,
+        color: UiTheme.colors.body,
         align: "center",
-        wordWrap: { width: 520 }
+        wordWrap: { width: this.textWrapWidth() },
+        lineSpacing: 6
       })
-      .setOrigin(0.5);
+      .setOrigin(0.5, 0);
+    y += bodyText.height + GAP_LG;
 
     this.phaseRoot.add(titleText);
     this.phaseRoot.add(bodyText);
 
-    let buttonY = 328;
+    let buttonY = y + GAP_MD;
+    const addPrimary = (label: string, key: string, payload?: Record<string, unknown>) => {
+      UiFactory.createButtonInContainer(this.phaseRoot, this, 0, buttonY, label, () => {
+        if (payload !== undefined) {
+          this.goScene(key, payload);
+        } else {
+          this.goScene(key);
+        }
+      }, { variant: "primary", width: BTN_W, height: BTN_H });
+      buttonY += BTN_H + BTN_GAP;
+    };
+    const addSecondary = (label: string, key: string, payload?: Record<string, unknown>) => {
+      UiFactory.createButtonInContainer(this.phaseRoot, this, 0, buttonY, label, () => {
+        if (payload !== undefined) {
+          this.goScene(key, payload);
+        } else {
+          this.goScene(key);
+        }
+      }, { variant: "secondary", width: BTN_W, height: BTN_H });
+      buttonY += BTN_H + BTN_GAP;
+    };
 
     if (data.outcome === "success" && data.nextLevelId) {
-      UiFactory.createButtonInContainer(this.phaseRoot, this, width / 2, buttonY, "play next level", () => {
-        this.scene.start("GameScene", { startLevelId: data.nextLevelId });
+      addPrimary("play next level", "GameScene", { startLevelId: data.nextLevelId });
+      addSecondary("play again", "GameScene", { startLevelId: data.levelId });
+    } else if (data.outcome === "success" && data.nextLevelId === null) {
+      addPrimary("continue to ending", "EndingScene", {
+        finalMessage:
+          "you made it to the end of the road.\nbut every message demanded attention that driving needed.\nno reply is worth a life."
       });
-      buttonY += 58;
+      addSecondary("play again", "GameScene", { startLevelId: data.levelId });
+    } else {
+      addPrimary("play again", "GameScene", { startLevelId: data.levelId });
     }
 
-    UiFactory.createButtonInContainer(this.phaseRoot, this, width / 2, buttonY, "play again", () => {
-      this.scene.start("GameScene", { startLevelId: data.levelId });
-    });
-    buttonY += 58;
+    UiFactory.createButtonInContainer(this.phaseRoot, this, 0, buttonY, "main menu", () => {
+      this.goScene("MainMenuScene");
+    }, { variant: "ghost", width: BTN_W, height: BTN_H });
 
-    if (data.outcome === "success" && data.nextLevelId === null) {
-      UiFactory.createButtonInContainer(this.phaseRoot, this, width / 2, buttonY, "continue to ending", () => {
-        this.scene.start("EndingScene", {
-          finalMessage:
-            "you made it to the end of the road.\nbut every message demanded attention that driving needed.\nno reply is worth a life."
-        });
-      });
-      buttonY += 58;
-    }
-
-    UiFactory.createButtonInContainer(
-      this.phaseRoot,
-      this,
-      width / 2,
-      buttonY,
-      "main menu",
-      () => {
-        this.scene.start("MainMenuScene");
-      },
-      { width: 240, height: 48, backgroundColor: 0x334155 }
-    );
+    this.addLevelSelectNav(this.phaseRoot);
   }
 }

@@ -1,11 +1,73 @@
 import Phaser from "phaser";
+import { UiTheme } from "./UiTheme";
+
+export type ButtonVariant = "primary" | "secondary" | "ghost";
 
 type ButtonOptions = {
   width?: number;
   height?: number;
   backgroundColor?: number;
   labelColor?: string;
+  strokeColor?: number;
+  /** When set, fills in colors unless overridden above. */
+  variant?: ButtonVariant;
+  /** Overrides default label font size (e.g. smaller nav). */
+  labelFontSize?: string;
 };
+
+type ResolvedButtonStyle = {
+  width: number;
+  height: number;
+  backgroundColor: number;
+  labelColor: string;
+  strokeColor: number;
+  fillAlpha: number;
+  hoverAlpha: number;
+};
+
+function resolveButtonStyle(options?: ButtonOptions): ResolvedButtonStyle {
+  const variant = options?.variant ?? "primary";
+  const width = options?.width ?? 240;
+  const height = options?.height ?? 52;
+  const b = UiTheme.buttons;
+
+  let backgroundColor = options?.backgroundColor;
+  let strokeColor = options?.strokeColor;
+  let labelColor = options?.labelColor;
+  let fillAlpha = 0.95;
+  let hoverAlpha = 1;
+
+  if (backgroundColor === undefined) {
+    if (variant === "primary") {
+      backgroundColor = b.primaryFill;
+      strokeColor = strokeColor ?? b.primaryStroke;
+      labelColor = labelColor ?? "#eff6ff";
+    } else if (variant === "secondary") {
+      backgroundColor = b.secondaryFill;
+      strokeColor = strokeColor ?? b.secondaryStroke;
+      labelColor = labelColor ?? UiTheme.colors.title;
+    } else {
+      backgroundColor = b.ghostFill;
+      strokeColor = strokeColor ?? b.ghostStroke;
+      labelColor = labelColor ?? UiTheme.colors.body;
+      fillAlpha = 0.58;
+      hoverAlpha = 0.88;
+    }
+  }
+  backgroundColor = backgroundColor ?? b.primaryFill;
+  strokeColor = strokeColor ?? b.primaryStroke;
+  labelColor = labelColor ?? "#eff6ff";
+
+  return {
+    width,
+    height,
+    backgroundColor,
+    labelColor,
+    strokeColor,
+    fillAlpha,
+    hoverAlpha
+  };
+}
 
 export class UiFactory {
   public static createPanel(
@@ -33,20 +95,18 @@ export class UiFactory {
     onClick: () => void,
     options?: ButtonOptions
   ): Phaser.GameObjects.Rectangle {
-    const width = options?.width ?? 240;
-    const height = options?.height ?? 52;
-    const backgroundColor = options?.backgroundColor ?? 0x1d4ed8;
-    const labelColor = options?.labelColor ?? "#eff6ff";
+    const s = resolveButtonStyle(options);
 
-    const bg = scene.add.rectangle(x, y, width, height, backgroundColor, 0.95);
-    bg.setStrokeStyle(1, 0x93c5fd, 0.85);
+    const bg = scene.add.rectangle(x, y, s.width, s.height, s.backgroundColor, s.fillAlpha);
+    bg.setStrokeStyle(1, s.strokeColor, 0.9);
     bg.setInteractive({ useHandCursor: true });
 
+    const fontSize = options?.labelFontSize ?? UiTheme.sizes.buttonDefault;
     const text = scene.add
       .text(x, y, label, {
-        fontFamily: "Arial",
-        fontSize: "20px",
-        color: labelColor
+        fontFamily: UiTheme.fontFamily,
+        fontSize,
+        color: s.labelColor
       })
       .setOrigin(0.5);
     text.setDepth(bg.depth + 1);
@@ -59,11 +119,11 @@ export class UiFactory {
 
     bg.on("pointerover", () => {
       bg.setScale(1.02);
-      bg.setFillStyle(backgroundColor, 1);
+      bg.setFillStyle(s.backgroundColor, s.hoverAlpha);
     });
     bg.on("pointerout", () => {
       bg.setScale(1);
-      bg.setFillStyle(backgroundColor, 0.95);
+      bg.setFillStyle(s.backgroundColor, s.fillAlpha);
     });
     bg.on("pointerdown", () => {
       bg.setScale(0.98);
@@ -88,20 +148,18 @@ export class UiFactory {
     onClick: () => void,
     options?: ButtonOptions
   ): Phaser.GameObjects.Rectangle {
-    const width = options?.width ?? 240;
-    const height = options?.height ?? 52;
-    const backgroundColor = options?.backgroundColor ?? 0x1d4ed8;
-    const labelColor = options?.labelColor ?? "#eff6ff";
+    const s = resolveButtonStyle(options);
 
-    const bg = scene.add.rectangle(x, y, width, height, backgroundColor, 0.95);
-    bg.setStrokeStyle(1, 0x93c5fd, 0.85);
+    const bg = scene.add.rectangle(x, y, s.width, s.height, s.backgroundColor, s.fillAlpha);
+    bg.setStrokeStyle(1, s.strokeColor, 0.9);
     bg.setInteractive({ useHandCursor: true });
 
+    const fontSize = options?.labelFontSize ?? UiTheme.sizes.resultButton;
     const text = scene.add
       .text(x, y, label, {
-        fontFamily: "Arial",
-        fontSize: "20px",
-        color: labelColor
+        fontFamily: UiTheme.fontFamily,
+        fontSize,
+        color: s.labelColor
       })
       .setOrigin(0.5);
     text.setDepth(bg.depth + 1);
@@ -116,11 +174,11 @@ export class UiFactory {
 
     bg.on("pointerover", () => {
       bg.setScale(1.02);
-      bg.setFillStyle(backgroundColor, 1);
+      bg.setFillStyle(s.backgroundColor, s.hoverAlpha);
     });
     bg.on("pointerout", () => {
       bg.setScale(1);
-      bg.setFillStyle(backgroundColor, 0.95);
+      bg.setFillStyle(s.backgroundColor, s.fillAlpha);
     });
     bg.on("pointerdown", () => {
       bg.setScale(0.98);
