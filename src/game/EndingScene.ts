@@ -19,11 +19,14 @@ export class EndingScene extends Phaser.Scene {
 
     this.cameras.main.setBackgroundColor(UiTheme.colors.bg);
 
-    const brandFont = `700 ${UiTheme.sizes.menuTitleSm} ${UiTheme.fontDisplay}`;
     const brand = this.add
       .text(width / 2, 86, "TEXT DRIVE", {
-        font: brandFont,
-        color: UiTheme.colors.title
+        fontFamily: UiTheme.fontDisplay,
+        fontSize: UiTheme.sizes.menuTitleSm,
+        fontStyle: "bold",
+        color: UiTheme.colors.title,
+        stroke: UiTheme.colors.bg,
+        strokeThickness: 4
       })
       .setOrigin(0.5);
     if (typeof (brand as Phaser.GameObjects.Text & { setLetterSpacing: (n: number) => void }).setLetterSpacing === "function") {

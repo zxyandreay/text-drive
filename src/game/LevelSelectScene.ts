@@ -16,16 +16,23 @@ export class LevelSelectScene extends Phaser.Scene {
     const levels = levelsData as LevelConfig[];
     const progressManager = new ProgressManager(levels);
 
-    this.add
-      .text(width / 2, 60, "Level Select", {
-        font: `600 32px ${UiTheme.fontFamily}`,
-        color: UiTheme.colors.title
+    const heading = this.add
+      .text(width / 2, 58, "LEVEL SELECT", {
+        fontFamily: UiTheme.fontDisplay,
+        fontSize: UiTheme.sizes.levelSelectHeading,
+        fontStyle: "bold",
+        color: UiTheme.colors.title,
+        stroke: UiTheme.colors.bg,
+        strokeThickness: 4
       })
       .setOrigin(0.5);
+    if (typeof (heading as Phaser.GameObjects.Text & { setLetterSpacing: (n: number) => void }).setLetterSpacing === "function") {
+      (heading as Phaser.GameObjects.Text & { setLetterSpacing: (n: number) => void }).setLetterSpacing(5);
+    }
 
     const cardW = Math.min(640, width - 48);
     const cardH = 92;
-    const startY = 150;
+    const startY = 152;
 
     levels.forEach((level, index) => {
       const y = startY + index * (cardH + 14);

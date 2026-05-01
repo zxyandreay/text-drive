@@ -1,16 +1,17 @@
 import Phaser from "phaser";
 
-/** Comfortable reading width on the 900px-wide layout; column never exceeds this. */
-export const NARRATIVE_MAX_WIDTH = 420;
+/** Upper cap for narrative column; intro/result overlays are wider than old 420px cap allowed. */
+export const NARRATIVE_MAX_WIDTH = 580;
 
 const MEASURE_X = -10000;
 const MEASURE_Y = -10000;
 const WIDTH_EPS = 1;
-const ORPHAN_MAX_CHARS = 8;
-const ORPHAN_PREV_MIN_CHARS = 28;
+/** Last line longer than this is treated as “not an orphan” and left alone. */
+const ORPHAN_MAX_CHARS = 14;
+const ORPHAN_PREV_MIN_CHARS = 24;
 
 /**
- * Caps line length for narrative prose: min 240px, max {@link NARRATIVE_MAX_WIDTH}, within `usablePx`.
+ * Narrative column: use available width up to {@link NARRATIVE_MAX_WIDTH} (readable line length on 900px).
  */
 export function getNarrativeColumnWidth(usablePx: number): number {
   const u = Math.max(0, usablePx);
@@ -67,7 +68,7 @@ function balanceOrphanLastLine(
   const lastIdx = lines.length - 1;
   const last = lines[lastIdx];
   const prev = lines[lastIdx - 1];
-  if (last.length >= ORPHAN_MAX_CHARS || prev.length < ORPHAN_PREV_MIN_CHARS) {
+  if (last.length > ORPHAN_MAX_CHARS || prev.length < ORPHAN_PREV_MIN_CHARS) {
     return;
   }
   const prevWords = prev.split(/\s+/).filter(Boolean);
@@ -128,6 +129,7 @@ export function wrapParagraphToLines(
   }
   pushCurrent();
 
+  balanceOrphanLastLine(probe, lines, maxWidthPx);
   balanceOrphanLastLine(probe, lines, maxWidthPx);
   return lines;
 }

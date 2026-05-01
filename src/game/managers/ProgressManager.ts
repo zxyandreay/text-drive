@@ -43,6 +43,23 @@ export class ProgressManager {
     return ordered;
   }
 
+  /**
+   * Only the first N levels in order may be completed (linear progression).
+   * Drops out-of-order entries so a save cannot show level 2+ done without level 1, etc.
+   */
+  private coerceSequentialCompletions(completed: string[]): string[] {
+    const ordered = this.normalizeCompleted(completed);
+    const out: string[] = [];
+    for (const id of this.levelOrder) {
+      if (ordered.includes(id)) {
+        out.push(id);
+      } else {
+        break;
+      }
+    }
+    return out;
+  }
+
   public load(): ProgressStateV2 {
     const rawV2 = localStorage.getItem(STORAGE_KEY_V2);
     if (rawV2) {
@@ -67,7 +84,7 @@ export class ProgressManager {
     if (rawV1) {
       try {
         const parsed = JSON.parse(rawV1) as LegacyProgressState;
-        const completed = this.normalizeCompleted(parsed.completed ?? []);
+        const completed = this.coerceSequentialCompletions(parsed.completed ?? []);
         const state: ProgressStateV2 = {
           version: 2,
           completed,
@@ -118,7 +135,7 @@ export class ProgressManager {
     const current = this.load();
     const completedSet = new Set(current.completed);
     completedSet.add(levelId);
-    const completed = this.normalizeCompleted([...completedSet]);
+    const completed = this.coerceSequentialCompletions([...completedSet]);
     const next: ProgressStateV2 = {
       version: 2,
       completed,
