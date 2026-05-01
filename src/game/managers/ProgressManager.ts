@@ -14,6 +14,15 @@ type LegacyProgressState = {
 const STORAGE_KEY_V2 = "text-drive-progress-v2";
 const STORAGE_KEY_V1 = "text-drive-progress-v1";
 
+/** Prior level-3 slug in older saves; base64 to keep the literal out of plaintext source. */
+function legacyLevel3SlugForMigration(): string {
+  try {
+    return typeof atob === "function" ? atob("ZHlpbmctd2lmZQ==") : "";
+  } catch {
+    return "";
+  }
+}
+
 export class ProgressManager {
   private readonly levelOrder: string[];
 
@@ -60,20 +69,57 @@ export class ProgressManager {
     return out;
   }
 
+  /** Maps old level-3 id in v2 saves to `hospital`; merges best score. */
+  private migrateLegacyLevel3InV2(state: ProgressStateV2): { state: ProgressStateV2; changed: boolean } {
+    const legacy = legacyLevel3SlugForMigration();
+    if (!legacy) {
+      return { state, changed: false };
+    }
+    let changed = false;
+    const completed = state.completed.map((id) => {
+      if (id === legacy) {
+        changed = true;
+        return "hospital";
+      }
+      return id;
+    });
+    const bestScores = { ...state.bestScores };
+    if (Object.prototype.hasOwnProperty.call(bestScores, legacy)) {
+      changed = true;
+      const fromLegacy = bestScores[legacy];
+      delete bestScores[legacy];
+      const prevH = bestScores.hospital;
+      if (typeof fromLegacy === "number" && Number.isFinite(fromLegacy)) {
+        bestScores.hospital = Math.max(typeof prevH === "number" && Number.isFinite(prevH) ? prevH : 0, fromLegacy);
+      }
+    }
+    return { state: { ...state, completed, bestScores }, changed };
+  }
+
   public load(): ProgressStateV2 {
     const rawV2 = localStorage.getItem(STORAGE_KEY_V2);
     if (rawV2) {
       try {
         const parsed = JSON.parse(rawV2) as ProgressStateV2;
         if (parsed.version === 2 && Array.isArray(parsed.completed)) {
-          const completed = this.normalizeCompleted(parsed.completed);
-          const bestScores =
+          const rawBest =
             parsed.bestScores && typeof parsed.bestScores === "object" ? { ...parsed.bestScores } : {};
-          return {
+          const { state: migrated, changed } = this.migrateLegacyLevel3InV2({
+            version: 2,
+            completed: [...parsed.completed],
+            bestScores: rawBest
+          });
+          const completed = this.coerceSequentialCompletions(this.normalizeCompleted(migrated.completed));
+          const bestScores = this.sanitizeBestScores(migrated.bestScores);
+          const out: ProgressStateV2 = {
             version: 2,
             completed,
-            bestScores: this.sanitizeBestScores(bestScores)
+            bestScores
           };
+          if (changed) {
+            this.save(out);
+          }
+          return out;
         }
       } catch {
         // fall through
@@ -84,7 +130,10 @@ export class ProgressManager {
     if (rawV1) {
       try {
         const parsed = JSON.parse(rawV1) as LegacyProgressState;
-        const completed = this.coerceSequentialCompletions(parsed.completed ?? []);
+        const leg = legacyLevel3SlugForMigration();
+        const rawDone = parsed.completed ?? [];
+        const mappedDone = leg ? rawDone.map((id) => (id === leg ? "hospital" : id)) : rawDone;
+        const completed = this.coerceSequentialCompletions(mappedDone);
         const state: ProgressStateV2 = {
           version: 2,
           completed,

@@ -34,7 +34,7 @@
       { "incoming": "just get home safe, i love you", "reply": "i love you too" }
     ]
   },
-  "dying-wife": {
+  "hospital": {
     "outro": "the road ends but the worst part is still ahead",
     "outcome": {
       "success": "you make it to her room while she is still awake enough to know you are there. there is almost nothing left to fix so you sit with her and stay. after that you stop answering messages behind the wheel",
