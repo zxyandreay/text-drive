@@ -18,8 +18,8 @@ export type DialoguePrompt = {
 export type DialogueBlock = {
   outro: string;
   outcome: {
-    success: string[];
-    failure: string[];
+    success: string;
+    failure: string;
   };
   prompts: DialoguePrompt[];
 };

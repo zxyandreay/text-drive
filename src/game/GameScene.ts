@@ -371,7 +371,7 @@ export class GameScene extends Phaser.Scene {
     }
     const level = this.levelManager.getCurrentLevel();
     const score = this.runScore.getScore();
-    const aftermathLines = this.dialogueManager.getOutcomeLines(level.id, "failure");
+    const aftermathText = this.dialogueManager.getOutcomeText(level.id, "failure");
     this.pendingFlowTimer?.remove();
     this.pendingFlowTimer = this.time.delayedCall(260, () => {
       this.pendingFlowTimer = undefined;
@@ -382,7 +382,7 @@ export class GameScene extends Phaser.Scene {
         score,
         reason,
         nextLevelId: null,
-        aftermathLines
+        aftermathText
       });
     });
   }
@@ -458,7 +458,7 @@ export class GameScene extends Phaser.Scene {
 
     const score = this.runScore.getScore();
     const nextLevelId = this.levelManager.getNextLevelId();
-    const aftermathLines = this.dialogueManager.getOutcomeLines(level.id, "success");
+    const aftermathText = this.dialogueManager.getOutcomeText(level.id, "success");
 
     this.pendingFlowTimer?.remove();
     this.pendingFlowTimer = this.time.delayedCall(450, () => {
@@ -470,7 +470,7 @@ export class GameScene extends Phaser.Scene {
         score,
         reason: undefined,
         nextLevelId,
-        aftermathLines
+        aftermathText
       });
     });
   }

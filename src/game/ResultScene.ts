@@ -13,7 +13,7 @@ export type ResultSceneData = {
   score: number;
   reason?: string;
   nextLevelId: string | null;
-  aftermathLines: string[];
+  aftermathText: string;
 };
 
 type ResultFlowPhase = "result" | "aftermath";
@@ -210,9 +210,9 @@ export class ResultScene extends Phaser.Scene {
     this.clearPhaseRoot();
     const data = this.dataPayload;
     const title = data.outcome === "success" ? "what happened after" : "what followed";
-    const bodyLines =
-      data.aftermathLines.length > 0
-        ? data.aftermathLines
+    const bodyParagraphs =
+      data.aftermathText.trim().length > 0
+        ? [data.aftermathText.trim()]
         : ["you take a breath and the story keeps moving", "you can choose what to do next"];
 
     let y = -PANEL_H / 2 + PAD_Y + NAV_H + GAP_AFTER_NAV;
@@ -235,7 +235,7 @@ export class ResultScene extends Phaser.Scene {
     };
     const bodyString = formatNarrativeBody(
       this,
-      bodyLines,
+      bodyParagraphs,
       bodyStyle,
       getNarrativeColumnWidth(this.textWrapWidth())
     );
