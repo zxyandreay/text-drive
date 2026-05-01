@@ -1,4 +1,6 @@
 import Phaser from "phaser";
+import { formatNarrativeBody, getNarrativeColumnWidth } from "./narrativeLayout";
+import { UiTheme } from "./UiTheme";
 
 export type LevelIntroOverlayOptions = {
   title: string;
@@ -6,6 +8,11 @@ export type LevelIntroOverlayOptions = {
   onComplete: () => void;
   onBack?: () => void;
 };
+
+const H_MARGIN = 56;
+const TITLE_TOP_FRAC = 0.16;
+const GAP_TITLE_BODY = 22;
+const GAP_BODY_HINT = 40;
 
 /**
  * Full-screen narration before gameplay: fade in, wait for key or click, fade out, destroy.
@@ -26,32 +33,40 @@ export class LevelIntroOverlay {
     backdrop.setStrokeStyle(2, 0x334155, 0.85);
     backdrop.setInteractive({ useHandCursor: true });
 
-    const titleText = scene.add
-      .text(width / 2, height * 0.28, options.title, {
-        fontFamily: "Arial",
-        fontSize: "26px",
-        color: "#e2e8f0"
-      })
-      .setOrigin(0.5, 0.5);
+    const usableW = width - H_MARGIN * 2;
+    const maxCol = getNarrativeColumnWidth(usableW);
 
-    const body = options.lines.join("\n\n");
-    const bodyText = scene.add
-      .text(width / 2, height * 0.48, body, {
-        fontFamily: "Arial",
-        fontSize: "18px",
-        color: "#cbd5e1",
-        align: "center",
-        wordWrap: { width: Math.min(520, width - 80) }
+    const bodyStyle: Phaser.Types.GameObjects.Text.TextStyle = {
+      fontFamily: UiTheme.fontFamily,
+      fontSize: UiTheme.sizes.resultBody,
+      color: UiTheme.colors.body,
+      align: "center",
+      lineSpacing: UiTheme.narrative.introLineSpacing
+    };
+
+    const bodyString = formatNarrativeBody(scene, options.lines, bodyStyle, maxCol);
+
+    let y = height * TITLE_TOP_FRAC;
+
+    const titleText = scene.add
+      .text(width / 2, y, options.title, {
+        fontFamily: UiTheme.fontFamily,
+        fontSize: UiTheme.sizes.titleLg,
+        color: UiTheme.colors.title
       })
-      .setOrigin(0.5, 0.5);
+      .setOrigin(0.5, 0);
+    y += titleText.height + GAP_TITLE_BODY;
+
+    const bodyText = scene.add.text(width / 2, y, bodyString, bodyStyle).setOrigin(0.5, 0);
+    y += bodyText.height + GAP_BODY_HINT;
 
     const hintText = scene.add
-      .text(width / 2, height * 0.78, "space / enter / click to continue", {
-        fontFamily: "Arial",
-        fontSize: "15px",
-        color: "#94a3b8"
+      .text(width / 2, y, "space / enter / click to continue", {
+        fontFamily: UiTheme.fontFamily,
+        fontSize: UiTheme.sizes.body,
+        color: UiTheme.colors.muted
       })
-      .setOrigin(0.5, 0.5);
+      .setOrigin(0.5, 0);
 
     const children: Phaser.GameObjects.GameObject[] = [backdrop, titleText, bodyText, hintText];
 
@@ -102,9 +117,9 @@ export class LevelIntroOverlay {
       backBg.setInteractive({ useHandCursor: true });
       const backLabel = scene.add
         .text(bx, by, "← levels", {
-          fontFamily: "Arial",
-          fontSize: "16px",
-          color: "#e2e8f0"
+          fontFamily: UiTheme.fontFamily,
+          fontSize: UiTheme.sizes.titleMd,
+          color: UiTheme.colors.title
         })
         .setOrigin(0.5);
       backBg.on("pointerup", () => {

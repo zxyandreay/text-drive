@@ -13,6 +13,16 @@ type ButtonOptions = {
   variant?: ButtonVariant;
   /** Overrides default label font size (e.g. smaller nav). */
   labelFontSize?: string;
+  /** Full CSS font shorthand for label (overrides labelFontSize + labelFontFamily). */
+  labelFont?: string;
+  /** Overrides `UiTheme.fontFamily` when `labelFont` is not set. */
+  labelFontFamily?: string;
+  /** Pixels; applied when supported. */
+  labelLetterSpacing?: number;
+  /** Rectangle stroke width (default 1). */
+  buttonStrokeWidth?: number;
+  /** When set, assigns depth to bg and bg+1 to label (menu layering). */
+  buttonDepth?: number;
 };
 
 type ResolvedButtonStyle = {
@@ -69,6 +79,40 @@ function resolveButtonStyle(options?: ButtonOptions): ResolvedButtonStyle {
   };
 }
 
+function addLabelText(
+  scene: Phaser.Scene,
+  x: number,
+  y: number,
+  label: string,
+  s: ResolvedButtonStyle,
+  options?: ButtonOptions
+): Phaser.GameObjects.Text {
+  const letterSpacing = options?.labelLetterSpacing;
+  let text: Phaser.GameObjects.Text;
+  if (options?.labelFont) {
+    text = scene.add
+      .text(x, y, label, {
+        font: options.labelFont,
+        color: s.labelColor
+      })
+      .setOrigin(0.5);
+  } else {
+    const fontSize = options?.labelFontSize ?? UiTheme.sizes.buttonDefault;
+    const fontFamily = options?.labelFontFamily ?? UiTheme.fontFamily;
+    text = scene.add
+      .text(x, y, label, {
+        fontFamily,
+        fontSize,
+        color: s.labelColor
+      })
+      .setOrigin(0.5);
+  }
+  if (letterSpacing !== undefined && typeof (text as Phaser.GameObjects.Text & { setLetterSpacing: (n: number) => void }).setLetterSpacing === "function") {
+    (text as Phaser.GameObjects.Text & { setLetterSpacing: (n: number) => void }).setLetterSpacing(letterSpacing);
+  }
+  return text;
+}
+
 export class UiFactory {
   public static createPanel(
     scene: Phaser.Scene,
@@ -98,18 +142,17 @@ export class UiFactory {
     const s = resolveButtonStyle(options);
 
     const bg = scene.add.rectangle(x, y, s.width, s.height, s.backgroundColor, s.fillAlpha);
-    bg.setStrokeStyle(1, s.strokeColor, 0.9);
+    bg.setStrokeStyle(options?.buttonStrokeWidth ?? 1, s.strokeColor, 0.9);
     bg.setInteractive({ useHandCursor: true });
 
-    const fontSize = options?.labelFontSize ?? UiTheme.sizes.buttonDefault;
-    const text = scene.add
-      .text(x, y, label, {
-        fontFamily: UiTheme.fontFamily,
-        fontSize,
-        color: s.labelColor
-      })
-      .setOrigin(0.5);
-    text.setDepth(bg.depth + 1);
+    const text = addLabelText(scene, x, y, label, s, options);
+    const depthBase = options?.buttonDepth;
+    if (depthBase !== undefined) {
+      bg.setDepth(depthBase);
+      text.setDepth(depthBase + 1);
+    } else {
+      text.setDepth(bg.depth + 1);
+    }
 
     bg.once("destroy", () => {
       if (text.active) {
@@ -119,17 +162,21 @@ export class UiFactory {
 
     bg.on("pointerover", () => {
       bg.setScale(1.02);
+      text.setScale(1.02);
       bg.setFillStyle(s.backgroundColor, s.hoverAlpha);
     });
     bg.on("pointerout", () => {
       bg.setScale(1);
+      text.setScale(1);
       bg.setFillStyle(s.backgroundColor, s.fillAlpha);
     });
     bg.on("pointerdown", () => {
       bg.setScale(0.98);
+      text.setScale(0.98);
     });
     bg.on("pointerup", () => {
       bg.setScale(1.02);
+      text.setScale(1.02);
       onClick();
     });
 
@@ -151,18 +198,20 @@ export class UiFactory {
     const s = resolveButtonStyle(options);
 
     const bg = scene.add.rectangle(x, y, s.width, s.height, s.backgroundColor, s.fillAlpha);
-    bg.setStrokeStyle(1, s.strokeColor, 0.9);
+    bg.setStrokeStyle(options?.buttonStrokeWidth ?? 1, s.strokeColor, 0.9);
     bg.setInteractive({ useHandCursor: true });
 
-    const fontSize = options?.labelFontSize ?? UiTheme.sizes.resultButton;
-    const text = scene.add
-      .text(x, y, label, {
-        fontFamily: UiTheme.fontFamily,
-        fontSize,
-        color: s.labelColor
-      })
-      .setOrigin(0.5);
-    text.setDepth(bg.depth + 1);
+    const text = addLabelText(scene, x, y, label, s, {
+      ...options,
+      labelFontSize: options?.labelFontSize ?? UiTheme.sizes.resultButton
+    });
+    const depthBase = options?.buttonDepth;
+    if (depthBase !== undefined) {
+      bg.setDepth(depthBase);
+      text.setDepth(depthBase + 1);
+    } else {
+      text.setDepth(bg.depth + 1);
+    }
 
     container.add([bg, text]);
 
@@ -174,17 +223,21 @@ export class UiFactory {
 
     bg.on("pointerover", () => {
       bg.setScale(1.02);
+      text.setScale(1.02);
       bg.setFillStyle(s.backgroundColor, s.hoverAlpha);
     });
     bg.on("pointerout", () => {
       bg.setScale(1);
+      text.setScale(1);
       bg.setFillStyle(s.backgroundColor, s.fillAlpha);
     });
     bg.on("pointerdown", () => {
       bg.setScale(0.98);
+      text.setScale(0.98);
     });
     bg.on("pointerup", () => {
       bg.setScale(1.02);
+      text.setScale(1.02);
       onClick();
     });
 

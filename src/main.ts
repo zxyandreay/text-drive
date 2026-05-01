@@ -22,4 +22,15 @@ const config: Phaser.Types.Core.GameConfig = {
   }
 };
 
-new Phaser.Game(config);
+async function boot(): Promise<void> {
+  try {
+    await document.fonts.load("700 64px Teko");
+    await document.fonts.load("600 20px Inter");
+    await document.fonts.ready;
+  } catch {
+    /* fall back to system fonts */
+  }
+  new Phaser.Game(config);
+}
+
+void boot();

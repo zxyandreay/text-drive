@@ -3,6 +3,7 @@ import levelsData from "../data/levels.json";
 import type { LevelConfig } from "./types/LevelTypes";
 import { ProgressManager } from "./managers/ProgressManager";
 import { UiFactory } from "./ui/UiFactory";
+import { UiTheme } from "./ui/UiTheme";
 
 export class LevelSelectScene extends Phaser.Scene {
   constructor() {
@@ -11,15 +12,14 @@ export class LevelSelectScene extends Phaser.Scene {
 
   create(): void {
     const { width } = this.scale;
-    this.cameras.main.setBackgroundColor("#020617");
+    this.cameras.main.setBackgroundColor(UiTheme.colors.bg);
     const levels = levelsData as LevelConfig[];
     const progressManager = new ProgressManager(levels);
 
     this.add
       .text(width / 2, 60, "Level Select", {
-        fontFamily: "Arial",
-        fontSize: "42px",
-        color: "#e2e8f0"
+        font: `600 32px ${UiTheme.fontFamily}`,
+        color: UiTheme.colors.title
       })
       .setOrigin(0.5);
 
@@ -40,11 +40,11 @@ export class LevelSelectScene extends Phaser.Scene {
         hit.setFillStyle(0x0b1220, 0.72);
       }
 
-      const titleColor = unlocked ? "#e2e8f0" : "#64748b";
-      const subColor = unlocked ? "#93c5fd" : "#475569";
+      const titleColor = unlocked ? UiTheme.colors.title : UiTheme.colors.muted;
+      const subColor = unlocked ? UiTheme.colors.accent : "#475569";
       const titleText = this.add
         .text(-cardW / 2 + 18, -26, level.title, {
-          fontFamily: "Arial",
+          fontFamily: UiTheme.fontFamily,
           fontSize: "26px",
           color: titleColor
         })
@@ -52,7 +52,7 @@ export class LevelSelectScene extends Phaser.Scene {
 
       const subText = this.add
         .text(-cardW / 2 + 18, 12, unlocked ? level.tone : "Locked — finish the previous level", {
-          fontFamily: "Arial",
+          fontFamily: UiTheme.fontFamily,
           fontSize: "16px",
           color: subColor,
           wordWrap: { width: cardW - 200 }
@@ -60,10 +60,10 @@ export class LevelSelectScene extends Phaser.Scene {
         .setOrigin(0, 0);
 
       const badge = completed ? "Completed" : unlocked ? "Unlocked" : "Locked";
-      const badgeColor = completed ? "#86efac" : unlocked ? "#fcd34d" : "#94a3b8";
+      const badgeColor = completed ? UiTheme.colors.success : unlocked ? "#fcd34d" : UiTheme.colors.muted;
       const badgeText = this.add
         .text(cardW / 2 - 18, 0, badge, {
-          fontFamily: "Arial",
+          fontFamily: UiTheme.fontFamily,
           fontSize: "18px",
           color: badgeColor
         })

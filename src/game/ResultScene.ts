@@ -4,6 +4,7 @@ import type { LevelConfig } from "./types/LevelTypes";
 import { ProgressManager } from "./managers/ProgressManager";
 import { UiFactory } from "./ui/UiFactory";
 import { UiTheme } from "./ui/UiTheme";
+import { formatNarrativeBody, getNarrativeColumnWidth } from "./ui/narrativeLayout";
 
 export type ResultSceneData = {
   outcome: "success" | "failure";
@@ -144,16 +145,20 @@ export class ResultScene extends Phaser.Scene {
 
     let reasonText: Phaser.GameObjects.Text | null = null;
     if (data.outcome === "failure" && data.reason) {
-      reasonText = this.add
-        .text(0, y, data.reason, {
-          fontFamily: UiTheme.fontFamily,
-          fontSize: UiTheme.sizes.resultReason,
-          color: UiTheme.colors.muted,
-          align: "center",
-          wordWrap: { width: this.textWrapWidth() },
-          lineSpacing: 4
-        })
-        .setOrigin(0.5, 0);
+      const reasonStyle: Phaser.Types.GameObjects.Text.TextStyle = {
+        fontFamily: UiTheme.fontFamily,
+        fontSize: UiTheme.sizes.resultReason,
+        color: UiTheme.colors.muted,
+        align: "center",
+        lineSpacing: UiTheme.narrative.resultLineSpacing
+      };
+      const reasonBody = formatNarrativeBody(
+        this,
+        [data.reason],
+        reasonStyle,
+        getNarrativeColumnWidth(this.textWrapWidth())
+      );
+      reasonText = this.add.text(0, y, reasonBody, reasonStyle).setOrigin(0.5, 0);
       y += reasonText.height + GAP_LG;
     }
 
@@ -218,18 +223,22 @@ export class ResultScene extends Phaser.Scene {
         color: UiTheme.colors.title
       })
       .setOrigin(0.5, 0);
-    y += titleText.height + GAP_LG;
+    y += titleText.height + GAP_MD;
 
-    const bodyText = this.add
-      .text(0, y, bodyLines.join("\n\n"), {
-        fontFamily: UiTheme.fontFamily,
-        fontSize: UiTheme.sizes.resultBody,
-        color: UiTheme.colors.body,
-        align: "center",
-        wordWrap: { width: this.textWrapWidth() },
-        lineSpacing: 6
-      })
-      .setOrigin(0.5, 0);
+    const bodyStyle: Phaser.Types.GameObjects.Text.TextStyle = {
+      fontFamily: UiTheme.fontFamily,
+      fontSize: UiTheme.sizes.resultBody,
+      color: UiTheme.colors.body,
+      align: "center",
+      lineSpacing: UiTheme.narrative.resultLineSpacing
+    };
+    const bodyString = formatNarrativeBody(
+      this,
+      bodyLines,
+      bodyStyle,
+      getNarrativeColumnWidth(this.textWrapWidth())
+    );
+    const bodyText = this.add.text(0, y, bodyString, bodyStyle).setOrigin(0.5, 0);
     y += bodyText.height + GAP_LG;
 
     this.phaseRoot.add(titleText);
