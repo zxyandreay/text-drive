@@ -37,6 +37,8 @@ The mechanics stay consistent across three short narrative levels:
 - **Two-step result flow**: score first, then short success/failure aftermath context
 - Submit-only typing validation (no per-letter punishment)
 - Local persistence: `localStorage` key `text-drive-progress-v2` (older saves may migrate from v1)
+- **Phone messaging UI**: scrollable chat thread with partner (left) and player (right) bubbles, optional typing indicator, and per-level message pacing (delays between incoming text, hint reveal, send beat, and next message). Reply hints and colored typed text share the same monospace layout.
+- **Reply box wrapping**: word-aware line breaks (wraps at spaces; splits mid-word only when a single token is wider than the reply area). Implemented in `src/game/ui/typingHighlightLayout.ts`.
 
 ## Current Game Flow
 
@@ -86,6 +88,7 @@ Tune per-level **story** time budgets in `src/data/levels.json` (`storyTimeSecon
 - `npm run dev` — Vite dev server
 - `npm run build` — TypeScript check + production bundle to `dist/`
 - `npm run preview` — Serve the production build locally
+- `npm run gh -- …` — (Windows) forwards arguments to [GitHub CLI](https://cli.github.com/) after syncing PATH via [`scripts/invoke-gh.ps1`](scripts/invoke-gh.ps1). Example: `npm run gh -- pr create --fill`
 
 ## Tech Stack
 
@@ -115,6 +118,8 @@ Enable **Settings → Pages → Source: GitHub Actions** on the repository, then
 ## Project Structure
 
 ```text
+scripts/
+  invoke-gh.ps1          # Windows helper so GitHub CLI works when PATH is trimmed (e.g. some agent shells)
 src/
   data/
     dialogue.json
@@ -138,9 +143,14 @@ src/
     types/
       LevelTypes.ts
     ui/
+      ChatBubbleRow.ts       # Partner / player / typing row factories for the phone thread
+      GameplayLayout.ts      # Road / phone layout metrics
       LevelIntroOverlay.ts
-      PhoneUI.ts
+      messagePacing.ts       # Per-level incoming/hint/send delays
+      PhoneUI.ts             # Phone chrome, chat thread, reply strip, status
+      typingHighlightLayout.ts  # Monospace wrap + per-character positions for hint vs typed line
       UiFactory.ts
+      UiTheme.ts
   main.ts
   style.css
 ```
@@ -158,3 +168,5 @@ src/
 - **Narration flow:** `src/game/ui/LevelIntroOverlay.ts` shows pre-level context; `GameScene` gates timer and typing until intro dismissal.
 - **Input:** `TypingSystem` removes its keyboard listener on scene `shutdown` so restarting a level does not stack handlers.
 - **UI buttons:** `UiFactory` uses an interactive rectangle plus separate text so hit areas align with the scaled canvas.
+- **Messaging:** `TypingSystem` sequences each prompt (incoming delay, optional typing row, partner bubble, hint delay, reply hint, compose gate, send beat, player bubble, next prompt). `PhoneUI` keeps `chatHistory` and rebuilds the thread on resize. Pacing presets live in `src/game/ui/messagePacing.ts` (keys: `first-date`, `marriage`, `dying-wife`).
+- **Driving pressure:** `isUnderPressure()` stays true until the level dialogue is fully completed so stress/crash coupling does not drop between messages.
