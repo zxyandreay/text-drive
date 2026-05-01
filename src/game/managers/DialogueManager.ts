@@ -13,7 +13,7 @@ export class DialogueManager {
     return this.getBlock(levelId).outro;
   }
 
-  public getOutcomeLines(levelId: string, outcome: "success" | "failure"): string[] {
+  public getOutcomeText(levelId: string, outcome: "success" | "failure"): string {
     return this.getBlock(levelId).outcome[outcome];
   }
 

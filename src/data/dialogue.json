@@ -2,16 +2,8 @@
   "first-date": {
     "outro": "you got through the first conversation",
     "outcome": {
-      "success": [
-        "you park and see her wave from under the theater light",
-        "the night is awkward and sweet and it feels worth the risk you took",
-        "later you start texting every day and the road between you gets shorter"
-      ],
-      "failure": [
-        "you arrive flustered and the first hello lands off beat",
-        "you still sit together but the evening carries a small distance",
-        "you keep talking after that yet both of you learn how easily timing can hurt"
-      ]
+      "success": "you park and see her wave from under the theater light. the night is awkward and sweet and it feels worth the risk you took. later you start texting every day and the road between you gets shorter",
+      "failure": "you arrive flustered and the first hello lands off beat. you still sit together but the evening carries a small distance. you keep talking after that yet both of you learn how easily timing can hurt"
     },
     "prompts": [
       { "incoming": "hey are you close", "reply": "almost there maybe ten minutes" },
@@ -31,16 +23,8 @@
   "marriage": {
     "outro": "the argument pauses but the tension stays",
     "outcome": {
-      "success": [
-        "you make it home before the food goes cold",
-        "the talk is still heavy but you stay at the table and finish it together",
-        "weeks later the hospital calls start and the old arguments feel smaller"
-      ],
-      "failure": [
-        "you walk in late and tired and the room goes quiet first",
-        "the fight stretches into the night and nothing really gets resolved",
-        "when health scares begin you both carry this unfinished weight"
-      ]
+      "success": "you make it home before the food goes cold. the talk is still heavy but you stay at the table and finish it together. weeks later the hospital calls start and the old arguments feel smaller",
+      "failure": "you walk in late and tired and the room goes quiet first. the fight stretches into the night and nothing really gets resolved. when health scares begin you both carry this unfinished weight"
     },
     "prompts": [
       { "incoming": "will you be home by seven", "reply": "i am aiming for 655" },
@@ -60,16 +44,8 @@
   "dying-wife": {
     "outro": "you keep driving but something is already slipping away",
     "outcome": {
-      "success": [
-        "you reach her room and take her hand before the monitors settle",
-        "there is little left to say so you stay and breathe with her",
-        "afterward the silence follows you home and you finally stop replying while driving"
-      ],
-      "failure": [
-        "you reach the ward just after the room has gone still",
-        "family fills in the last minutes and you nod through words you cannot hold",
-        "on the drive back every notification sounds like something you cannot fix"
-      ]
+      "success": "you reach her room and take her hand before the monitors settle. there is little left to say so you stay and breathe with her. afterward the silence follows you home and you finally stop replying while driving",
+      "failure": "you reach the ward just after the room has gone still. family fills in the last minutes and you nod through words you cannot hold. on the drive back every notification sounds like something you cannot fix"
     },
     "prompts": [
       { "incoming": "are you close", "reply": "ten minutes if lights hold" },
