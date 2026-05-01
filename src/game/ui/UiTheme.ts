@@ -48,12 +48,14 @@ export const UiTheme = {
     resultNav: "14px",
     /** Default menu / generic buttons (not result screen). */
     buttonDefault: "20px",
-    /** Main menu hero (Teko display) */
-    menuTitle: "60px",
+    /** Main menu hero: size is computed in MainMenuScene from viewport (Teko 700 Bold). */
+    menuTitle: "220px",
     /** Ending / secondary brand line */
-    menuTitleSm: "52px",
-    menuTagline: "14px",
-    menuCta: "20px"
+    menuTitleSm: "72px",
+    /** Level select and similar full-width screen headings (Teko 700 Bold) */
+    levelSelectHeading: "56px",
+    menuTagline: "13px",
+    menuCta: "18px"
   },
   /** Filled / outline button presets for result screens (hex stroke for Phaser lineStyle). */
   buttons: {

@@ -24,8 +24,10 @@ const config: Phaser.Types.Core.GameConfig = {
 
 async function boot(): Promise<void> {
   try {
-    await document.fonts.load("700 64px Teko");
-    await document.fonts.load("600 20px Inter");
+    await document.fonts.load("700 168px Teko");
+    await document.fonts.load("700 56px Teko");
+    await document.fonts.load("700 72px Teko");
+    await document.fonts.load("600 18px Inter");
     await document.fonts.ready;
   } catch {
     /* fall back to system fonts */

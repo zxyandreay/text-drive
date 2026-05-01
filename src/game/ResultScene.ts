@@ -23,13 +23,14 @@ const PAD_X = 28;
 const PAD_Y = 24;
 const NAV_W = 220;
 const NAV_H = 40;
-const GAP_AFTER_NAV = 18;
-const GAP_SM = 8;
+const GAP_AFTER_NAV = 12;
 const GAP_MD = 12;
 const GAP_LG = 18;
+/** Space between last text line and first button (center-to-edge uses half button height below this). */
+const GAP_TEXT_TO_BTN = 32;
 const BTN_W = 272;
 const BTN_H = 48;
-const BTN_GAP = 12;
+const BTN_GAP = 18;
 const PANEL_H = 480;
 const PANEL_MAX_W = 600;
 
@@ -169,7 +170,7 @@ export class ResultScene extends Phaser.Scene {
         color: "#f8fafc"
       })
       .setOrigin(0.5, 0);
-    y += scoreText.height + GAP_SM;
+    y += scoreText.height + GAP_MD;
 
     const bestText = this.add
       .text(0, y, `best ${bestShown}`, {
@@ -178,7 +179,7 @@ export class ResultScene extends Phaser.Scene {
         color: UiTheme.colors.accent
       })
       .setOrigin(0.5, 0);
-    y += bestText.height + GAP_LG;
+    y += bestText.height;
 
     this.phaseRoot.add(headlineText);
     this.phaseRoot.add(levelTitleText);
@@ -189,7 +190,7 @@ export class ResultScene extends Phaser.Scene {
     this.phaseRoot.add(bestText);
 
     const bottomSpace = PANEL_H / 2 - PAD_Y;
-    const continueY = Math.min(y + GAP_MD, bottomSpace - BTN_H / 2);
+    const continueY = Math.min(y + GAP_TEXT_TO_BTN + BTN_H / 2, bottomSpace - BTN_H / 2);
     UiFactory.createButtonInContainer(this.phaseRoot, this, 0, continueY, "continue", () => {
       if (this.phase !== "result" || this.exiting) {
         return;
@@ -239,12 +240,12 @@ export class ResultScene extends Phaser.Scene {
       getNarrativeColumnWidth(this.textWrapWidth())
     );
     const bodyText = this.add.text(0, y, bodyString, bodyStyle).setOrigin(0.5, 0);
-    y += bodyText.height + GAP_LG;
+    y += bodyText.height;
 
     this.phaseRoot.add(titleText);
     this.phaseRoot.add(bodyText);
 
-    let buttonY = y + GAP_MD;
+    let buttonY = y + GAP_TEXT_TO_BTN + BTN_H / 2;
     const addPrimary = (label: string, key: string, payload?: Record<string, unknown>) => {
       UiFactory.createButtonInContainer(this.phaseRoot, this, 0, buttonY, label, () => {
         if (payload !== undefined) {
