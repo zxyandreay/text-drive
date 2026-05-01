@@ -249,8 +249,8 @@ export class TypingSystem {
         this.phoneUI.refreshTypedDisplay("", "");
         this.typedValue = "";
 
-        this.onCorrectReply?.();
         this.completedCount += 1;
+        this.onCorrectReply?.();
 
         if (this.completedCount >= this.prompts.length) {
           this.sendBeatTimer = this.scene.time.delayedCall(this.pacing.sendBeatMs, () => {
