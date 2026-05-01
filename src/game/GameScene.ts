@@ -430,7 +430,7 @@ export class GameScene extends Phaser.Scene {
   private beginGameplay(): void {
     const level = this.levelManager.getCurrentLevel();
     this.flowState = "gameplay";
-    this.typingSystem.startLevel(this.dialogueManager.getPrompts(level.id));
+    this.typingSystem.startLevel(this.dialogueManager.getPrompts(level.id), level.id);
 
     if (!this.hintFaded) {
       this.hintFaded = true;

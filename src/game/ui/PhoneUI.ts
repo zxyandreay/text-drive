@@ -1,23 +1,35 @@
 import Phaser from "phaser";
 import type { PhoneLayout } from "./GameplayLayout";
 import { UiTheme } from "./UiTheme";
-import { buildCharCells, layoutCellsAsPlacedSegments } from "./typingHighlightLayout";
+import { layoutTypedCellsWithExpectedGeometry, wrapMonospaceStringToLines } from "./typingHighlightLayout";
+import {
+  createPartnerBubbleRow,
+  createPlayerBubbleRow,
+  createTypingRow
+} from "./ChatBubbleRow";
 
 const INPUT_INNER_PAD = 14;
 const HINT_ALPHA_STRONG = 0.55;
 const HINT_ALPHA_FADED = 0.27;
 const LABEL_TO_TYPED_GAP = 8;
 const PANEL_TOP_PAD = 12;
+const THREAD_GAP_ABOVE_INPUT = 10;
+
+type ChatHistoryEntry = { kind: "partner" | "player"; body: string };
+
 export class PhoneUI {
   private readonly scene: Phaser.Scene;
   private readonly container: Phaser.GameObjects.Container;
   private readonly frame: Phaser.GameObjects.Rectangle;
   private readonly headerBar: Phaser.GameObjects.Rectangle;
   private readonly headerText: Phaser.GameObjects.Text;
-  private readonly incomingText: Phaser.GameObjects.Text;
+  private readonly threadClipRoot: Phaser.GameObjects.Container;
+  private readonly threadContent: Phaser.GameObjects.Container;
+  private readonly threadMaskG: Phaser.GameObjects.Graphics;
+  private threadMask?: Phaser.Display.Masks.GeometryMask;
   private readonly inputPanel: Phaser.GameObjects.Rectangle;
   private readonly inputLabel: Phaser.GameObjects.Text;
-  private readonly replyHintText: Phaser.GameObjects.Text;
+  private readonly replyHintContainer: Phaser.GameObjects.Container;
   private readonly typedLineContainer: Phaser.GameObjects.Container;
   private readonly statusText: Phaser.GameObjects.Text;
   private readonly vibrationOverlay: Phaser.GameObjects.Rectangle;
@@ -30,6 +42,13 @@ export class PhoneUI {
   private displayTyped = "";
   private displayExpected = "";
   private typingFadeCommitted = false;
+  private replyHintSource = "";
+
+  private chatHistory: ChatHistoryEntry[] = [];
+  private threadCursorY = 0;
+  private threadViewportH = 0;
+  private typingRowContainer: Phaser.GameObjects.Container | null = null;
+  private typingRowHeight = 0;
 
   constructor(scene: Phaser.Scene, initial: PhoneLayout) {
     this.scene = scene;
@@ -48,14 +67,12 @@ export class PhoneUI {
       })
       .setOrigin(0, 0);
 
-    this.incomingText = scene.add
-      .text(0, 0, "", {
-        fontFamily: UiTheme.fontFamily,
-        fontSize: UiTheme.sizes.phoneBody,
-        color: UiTheme.colors.accent,
-        wordWrap: { width: 280 }
-      })
-      .setOrigin(0, 0);
+    this.threadClipRoot = scene.add.container(0, 0);
+    this.threadMaskG = scene.add.graphics();
+    this.threadMaskG.setVisible(false);
+    this.threadContent = scene.add.container(0, 0);
+    this.threadClipRoot.add(this.threadMaskG);
+    this.threadClipRoot.add(this.threadContent);
 
     this.inputPanel = scene.add.rectangle(0, 0, 1, 1, 0x1e293b, 0.94);
     this.inputPanel.setStrokeStyle(1, 0x475569, 0.75);
@@ -68,15 +85,8 @@ export class PhoneUI {
       })
       .setOrigin(0, 0);
 
-    this.replyHintText = scene.add
-      .text(0, 0, "", {
-        fontFamily: "Consolas, monospace",
-        fontSize: UiTheme.sizes.phoneMono,
-        color: UiTheme.colors.replyHint,
-        wordWrap: { width: 280 }
-      })
-      .setOrigin(0, 0);
-    this.replyHintText.setAlpha(0);
+    this.replyHintContainer = scene.add.container(0, 0);
+    this.replyHintContainer.setAlpha(0);
 
     this.typedLineContainer = scene.add.container(0, 0);
 
@@ -94,9 +104,9 @@ export class PhoneUI {
       this.frame,
       this.headerBar,
       this.headerText,
-      this.incomingText,
+      this.threadClipRoot,
       this.inputPanel,
-      this.replyHintText,
+      this.replyHintContainer,
       this.typedLineContainer,
       this.inputLabel,
       this.statusText,
@@ -109,7 +119,6 @@ export class PhoneUI {
 
   public applyLayout(phone: PhoneLayout): void {
     const { centerX, centerY, width, height } = phone;
-    const halfW = width * 0.5;
     const halfH = height * 0.5;
     const padX = 10;
     const innerW = width - padX * 2;
@@ -119,8 +128,6 @@ export class PhoneUI {
     const panelLeft = centerX - panelInnerW * 0.5;
     this.contentLeft = panelLeft + INPUT_INNER_PAD;
     this.contentWidth = Math.max(80, panelInnerW - INPUT_INNER_PAD * 2);
-    const frameContentRight = centerX + halfW - padX;
-    const messageWrapW = Math.max(160, frameContentRight - this.contentLeft - INPUT_INNER_PAD);
 
     this.frame.setPosition(centerX, centerY);
     this.frame.setSize(width, height);
@@ -131,12 +138,21 @@ export class PhoneUI {
 
     this.headerText.setPosition(this.contentLeft, headerTop + 7);
 
-    const incomingY = headerTop + headerH + 10;
-    this.incomingText.setPosition(this.contentLeft, incomingY);
-    this.incomingText.setWordWrapWidth(messageWrapW, true);
+    const threadTop = headerTop + headerH + 8;
 
     const inputH = Phaser.Math.Clamp(Math.round(height * 0.28), 120, 168);
     const inputTop = centerY + halfH - inputH - padX - 28;
+    this.threadViewportH = Math.max(48, inputTop - threadTop - THREAD_GAP_ABOVE_INPUT);
+
+    this.threadClipRoot.setPosition(this.contentLeft, threadTop);
+    this.threadMaskG.clear();
+    this.threadMaskG.fillStyle(0xffffff, 1);
+    this.threadMaskG.fillRect(0, 0, this.contentWidth, this.threadViewportH);
+    if (!this.threadMask) {
+      this.threadMask = this.threadMaskG.createGeometryMask();
+      this.threadContent.setMask(this.threadMask);
+    }
+
     this.inputPanel.setPosition(centerX, inputTop + inputH * 0.5);
     this.inputPanel.setSize(panelInnerW, inputH);
 
@@ -145,8 +161,7 @@ export class PhoneUI {
     const labelBottom = this.inputLabel.y + this.inputLabel.height;
     this.typedAreaY = labelBottom + LABEL_TO_TYPED_GAP;
 
-    this.replyHintText.setPosition(this.contentLeft, this.typedAreaY);
-    this.replyHintText.setWordWrapWidth(this.contentWidth, true);
+    this.replyHintContainer.setPosition(this.contentLeft, this.typedAreaY);
 
     this.typedLineContainer.setPosition(this.contentLeft, this.typedAreaY);
 
@@ -156,7 +171,85 @@ export class PhoneUI {
     this.vibrationOverlay.setSize(width - 8, height - 8);
 
     this.refreshMonoMetrics();
+    this.rebuildThreadFromHistory();
+    if (this.replyHintSource.length > 0) {
+      this.rebuildHintLines();
+    }
     this.rebuildTypedDisplay();
+  }
+
+  private scrollThreadToBottom(): void {
+    const extent = this.threadCursorY + this.typingRowHeight;
+    this.threadContent.setY(Math.min(0, this.threadViewportH - extent));
+  }
+
+  private removeTypingIndicator(): void {
+    if (this.typingRowContainer) {
+      this.threadContent.remove(this.typingRowContainer, true);
+      this.typingRowContainer = null;
+      this.typingRowHeight = 0;
+    }
+  }
+
+  private rebuildThreadFromHistory(): void {
+    this.removeTypingIndicator();
+    this.threadContent.removeAll(true);
+    this.threadCursorY = 0;
+    const tw = this.contentWidth;
+    for (const e of this.chatHistory) {
+      const row =
+        e.kind === "partner"
+          ? createPartnerBubbleRow(this.scene, e.body, tw)
+          : createPlayerBubbleRow(this.scene, e.body, tw);
+      row.container.setPosition(0, this.threadCursorY);
+      this.threadContent.add(row.container);
+      this.threadCursorY += row.height;
+    }
+    this.scrollThreadToBottom();
+  }
+
+  public clearThread(): void {
+    this.chatHistory = [];
+    this.removeTypingIndicator();
+    this.threadContent.removeAll(true);
+    this.threadCursorY = 0;
+    this.scrollThreadToBottom();
+  }
+
+  public appendPartnerMessage(body: string): void {
+    this.removeTypingIndicator();
+    const norm = body.trim().toLowerCase();
+    this.chatHistory.push({ kind: "partner", body: norm });
+    const row = createPartnerBubbleRow(this.scene, norm, this.contentWidth);
+    row.container.setPosition(0, this.threadCursorY);
+    this.threadContent.add(row.container);
+    this.threadCursorY += row.height;
+    this.scrollThreadToBottom();
+  }
+
+  public appendPlayerMessage(body: string): void {
+    const norm = body.trim().toLowerCase();
+    this.chatHistory.push({ kind: "player", body: norm });
+    const row = createPlayerBubbleRow(this.scene, norm, this.contentWidth);
+    row.container.setPosition(0, this.threadCursorY);
+    this.threadContent.add(row.container);
+    this.threadCursorY += row.height;
+    this.scrollThreadToBottom();
+  }
+
+  public setTypingIndicator(visible: boolean): void {
+    if (!visible) {
+      this.removeTypingIndicator();
+      this.scrollThreadToBottom();
+      return;
+    }
+    this.removeTypingIndicator();
+    const row = createTypingRow(this.scene, this.contentWidth);
+    this.typingRowContainer = row.container;
+    this.typingRowHeight = row.height;
+    row.container.setPosition(0, this.threadCursorY);
+    this.threadContent.add(row.container);
+    this.scrollThreadToBottom();
   }
 
   private refreshMonoMetrics(): void {
@@ -169,25 +262,42 @@ export class PhoneUI {
     t.destroy();
   }
 
+  private rebuildHintLines(): void {
+    this.replyHintContainer.removeAll(true);
+    if (this.replyHintSource.length === 0 || this.monoCharW <= 0 || this.contentWidth <= 0) {
+      return;
+    }
+    const lines = wrapMonospaceStringToLines(this.replyHintSource, this.monoCharW, this.contentWidth);
+    const monoStyle = {
+      fontFamily: "Consolas, monospace",
+      fontSize: UiTheme.sizes.phoneMono,
+      color: UiTheme.colors.replyHint
+    };
+    for (let r = 0; r < lines.length; r++) {
+      const lineText = this.scene.add
+        .text(0, r * this.monoLineH, lines[r], monoStyle)
+        .setOrigin(0, 0);
+      this.replyHintContainer.add(lineText);
+    }
+  }
+
   public setDepth(depth: number): void {
     this.container.setDepth(depth);
   }
 
-  public showIncoming(body: string): void {
-    this.incomingText.setText(body);
-  }
-
   public clearReplyHint(): void {
-    this.scene.tweens.killTweensOf(this.replyHintText);
-    this.replyHintText.setText("");
-    this.replyHintText.setAlpha(0);
+    this.scene.tweens.killTweensOf(this.replyHintContainer);
+    this.replyHintContainer.removeAll(true);
+    this.replyHintSource = "";
+    this.replyHintContainer.setAlpha(0);
     this.typingFadeCommitted = false;
   }
 
   public setReplyHint(expected: string): void {
-    this.scene.tweens.killTweensOf(this.replyHintText);
-    this.replyHintText.setText(expected);
-    this.replyHintText.setAlpha(HINT_ALPHA_STRONG);
+    this.scene.tweens.killTweensOf(this.replyHintContainer);
+    this.replyHintSource = expected;
+    this.rebuildHintLines();
+    this.replyHintContainer.setAlpha(HINT_ALPHA_STRONG);
     this.typingFadeCommitted = false;
   }
 
@@ -200,15 +310,15 @@ export class PhoneUI {
 
     if (typed.length === 0) {
       this.typingFadeCommitted = false;
-      if (this.replyHintText.text.length > 0) {
-        this.scene.tweens.killTweensOf(this.replyHintText);
-        this.replyHintText.setAlpha(HINT_ALPHA_STRONG);
+      if (this.replyHintSource.length > 0) {
+        this.scene.tweens.killTweensOf(this.replyHintContainer);
+        this.replyHintContainer.setAlpha(HINT_ALPHA_STRONG);
       }
-    } else if (!this.typingFadeCommitted && this.replyHintText.text.length > 0) {
+    } else if (!this.typingFadeCommitted && this.replyHintSource.length > 0) {
       this.typingFadeCommitted = true;
-      this.scene.tweens.killTweensOf(this.replyHintText);
+      this.scene.tweens.killTweensOf(this.replyHintContainer);
       this.scene.tweens.add({
-        targets: this.replyHintText,
+        targets: this.replyHintContainer,
         alpha: HINT_ALPHA_FADED,
         duration: 320,
         ease: "Sine.easeOut"
@@ -233,11 +343,17 @@ export class PhoneUI {
       return;
     }
 
-    const cells = buildCharCells(this.displayTyped, this.displayExpected, {
-      ok: UiTheme.colors.typedCorrect,
-      bad: UiTheme.colors.typedWrong
-    });
-    const placed = layoutCellsAsPlacedSegments(cells, this.monoCharW, this.monoLineH, this.contentWidth);
+    const placed = layoutTypedCellsWithExpectedGeometry(
+      this.displayTyped,
+      this.displayExpected,
+      {
+        ok: UiTheme.colors.typedCorrect,
+        bad: UiTheme.colors.typedWrong
+      },
+      this.monoCharW,
+      this.monoLineH,
+      this.contentWidth
+    );
     for (const seg of placed) {
       const t = this.scene.add
         .text(seg.x, seg.y, seg.text, {
@@ -252,7 +368,7 @@ export class PhoneUI {
 
   /** Clears thread until the first real prompt (e.g. during level intro). */
   public setIdleBeforeConversation(): void {
-    this.incomingText.setText("");
+    this.clearThread();
     this.clearReplyHint();
     this.displayTyped = "";
     this.displayExpected = "";
