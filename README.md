@@ -26,7 +26,7 @@ The mechanics stay consistent across three short narrative levels:
 
 1. First Date
 2. Marriage
-3. Dying Wife
+3. Hospital
 
 ## Features
 
