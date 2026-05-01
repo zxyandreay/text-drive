@@ -20,7 +20,9 @@ export const UiTheme = {
     /** Typed characters that do not match at the same index */
     typedWrong: "#f87171",
     /** Empty-input cursor */
-    typedCursor: "#64748b"
+    typedCursor: "#64748b",
+    /** Main menu tagline (quieter than accent) */
+    menuTagline: "#7dd3fc"
   },
   sizes: {
     titleLg: "26px",
@@ -42,7 +44,11 @@ export const UiTheme = {
     resultButton: "18px",
     resultNav: "14px",
     /** Default menu / generic buttons (not result screen). */
-    buttonDefault: "20px"
+    buttonDefault: "20px",
+    /** Main menu hero */
+    menuTitle: "36px",
+    menuTagline: "17px",
+    menuCta: "19px"
   },
   /** Filled / outline button presets for result screens (hex stroke for Phaser lineStyle). */
   buttons: {
