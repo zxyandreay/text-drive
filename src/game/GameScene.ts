@@ -9,6 +9,7 @@ import { LevelManager } from "./managers/LevelManager";
 import { ProgressManager } from "./managers/ProgressManager";
 import { RunScore } from "./managers/RunScore";
 import { LevelIntroOverlay } from "./ui/LevelIntroOverlay";
+import { GameplayPauseOverlay } from "./ui/GameplayPauseOverlay";
 import { computeGameplayLayout, type GameplayLayoutMetrics } from "./ui/GameplayLayout";
 import { UiTheme } from "./ui/UiTheme";
 import levelsData from "../data/levels.json";
@@ -64,6 +65,23 @@ export class GameScene extends Phaser.Scene {
   private flowState: LevelFlowState = "preLevelNarration";
   private pendingFlowTimer?: Phaser.Time.TimerEvent;
   private hintFaded = false;
+  private gameplayPaused = false;
+  private pauseOverlay: GameplayPauseOverlay | null = null;
+
+  private readonly onPauseKey = (event: KeyboardEvent): void => {
+    if (event.key !== "Escape") {
+      return;
+    }
+    if (this.gameOver || this.flowState !== "gameplay") {
+      return;
+    }
+    event.preventDefault();
+    if (this.gameplayPaused) {
+      this.resumeGameplay();
+    } else {
+      this.pauseGameplay();
+    }
+  };
 
   constructor() {
     super("GameScene");
@@ -75,6 +93,9 @@ export class GameScene extends Phaser.Scene {
     this.transitioningLevel = false;
     this.crashCount = 0;
     this.hintFaded = false;
+    this.gameplayPaused = false;
+    this.pauseOverlay = null;
+    this.time.paused = false;
     this.pendingFlowTimer?.remove();
     this.pendingFlowTimer = undefined;
 
@@ -113,11 +134,19 @@ export class GameScene extends Phaser.Scene {
     this.configureLevel();
     this.applyHudLayout(this.layout);
 
+    this.input.keyboard?.on("keydown", this.onPauseKey);
     this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this);
     this.events.once("shutdown", () => {
+      this.input.keyboard?.off("keydown", this.onPauseKey);
       this.scale.off(Phaser.Scale.Events.RESIZE, this.handleResize, this);
       this.pendingFlowTimer?.remove();
       this.pendingFlowTimer = undefined;
+      this.pauseOverlay?.destroy();
+      this.pauseOverlay = null;
+      this.time.paused = false;
+      this.tweens.resumeAll();
+      this.typingSystem?.setGameplayInputBlocked(false);
+      this.typingSystem?.setExchangeTimersPaused(false);
     });
 
     this.showLevelIntro();
@@ -281,6 +310,10 @@ export class GameScene extends Phaser.Scene {
     this.phoneUI.applyLayout(this.layout.phone);
     this.phoneUI.setDepth(this.layout.phoneDepth);
     this.applyHudLayout(this.layout);
+    if (this.gameplayPaused && this.pauseOverlay) {
+      this.pauseOverlay.destroy();
+      this.pauseOverlay = new GameplayPauseOverlay(this, this.getPauseOverlayOptions());
+    }
   }
 
   private exitToLevelSelect(): void {
@@ -291,11 +324,72 @@ export class GameScene extends Phaser.Scene {
     this.scene.start("LevelSelectScene");
   }
 
+  private getPauseOverlayOptions() {
+    const level = this.levelManager.getCurrentLevel();
+    return {
+      levelTitle: level.title,
+      introLines: level.introNarration,
+      onResume: () => {
+        this.resumeGameplay();
+      },
+      onLevelSelect: () => {
+        this.resumeGameplay();
+        this.exitToLevelSelect();
+      },
+      onMainMenu: () => {
+        this.resumeGameplay();
+        this.pendingFlowTimer?.remove();
+        this.pendingFlowTimer = undefined;
+        this.gameOver = true;
+        this.flowState = "ending";
+        this.scene.start("MainMenuScene");
+      },
+      onRestart: () => {
+        this.resumeGameplay();
+        this.pendingFlowTimer?.remove();
+        this.pendingFlowTimer = undefined;
+        this.gameOver = false;
+        this.transitioningLevel = false;
+        this.configureLevel();
+        this.applyHudLayout(this.layout);
+        this.showLevelIntro();
+      }
+    };
+  }
+
+  private pauseGameplay(): void {
+    if (this.gameplayPaused || this.gameOver || this.flowState !== "gameplay") {
+      return;
+    }
+    this.gameplayPaused = true;
+    this.time.paused = true;
+    this.tweens.pauseAll();
+    this.typingSystem.setGameplayInputBlocked(true);
+    this.typingSystem.setExchangeTimersPaused(true);
+    this.pauseOverlay = new GameplayPauseOverlay(this, this.getPauseOverlayOptions());
+  }
+
+  private resumeGameplay(): void {
+    if (!this.gameplayPaused) {
+      return;
+    }
+    this.pauseOverlay?.destroy();
+    this.pauseOverlay = null;
+    this.gameplayPaused = false;
+    this.time.paused = false;
+    this.tweens.resumeAll();
+    this.typingSystem.setGameplayInputBlocked(false);
+    this.typingSystem.setExchangeTimersPaused(false);
+  }
+
   update(_time: number, delta: number): void {
     if (this.gameOver) {
       return;
     }
     if (this.flowState !== "gameplay") {
+      return;
+    }
+    if (this.gameplayPaused) {
       return;
     }
 
