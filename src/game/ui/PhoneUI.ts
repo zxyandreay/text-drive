@@ -24,9 +24,13 @@ export class PhoneUI {
   private readonly headerBar: Phaser.GameObjects.Rectangle;
   private readonly headerText: Phaser.GameObjects.Text;
   private readonly threadClipRoot: Phaser.GameObjects.Container;
-  private readonly threadViewportMaskGraphics: Phaser.GameObjects.Graphics;
+  /**
+   * Geometry mask source only (not on the display list). Phaser's GeometryMask calls
+   * `renderWebGL(renderer, src, camera)` without a parent matrix, so a nested Graphics
+   * mask uses wrong world coordinates and stencils nothing → invisible bubbles.
+   */
+  private readonly threadMaskGraphics: Phaser.GameObjects.Graphics;
   private readonly threadContent: Phaser.GameObjects.Container;
-  private threadViewportGeometryMask: Phaser.Display.Masks.GeometryMask | null = null;
   private readonly inputPanel: Phaser.GameObjects.Rectangle;
   private readonly inputLabel: Phaser.GameObjects.Text;
   private readonly replyHintContainer: Phaser.GameObjects.Container;
@@ -68,9 +72,8 @@ export class PhoneUI {
       .setOrigin(0, 0);
 
     this.threadClipRoot = scene.add.container(0, 0);
-    this.threadViewportMaskGraphics = scene.add.graphics();
+    this.threadMaskGraphics = new Phaser.GameObjects.Graphics(scene);
     this.threadContent = scene.add.container(0, 0);
-    this.threadClipRoot.addAt(this.threadViewportMaskGraphics, 0);
     this.threadClipRoot.add(this.threadContent);
 
     this.inputPanel = scene.add.rectangle(0, 0, 1, 1, 0x1e293b, 0.94);
@@ -144,7 +147,6 @@ export class PhoneUI {
     this.threadViewportH = Math.max(48, inputTop - threadTop - THREAD_GAP_ABOVE_INPUT);
 
     this.threadClipRoot.setPosition(this.contentLeft, threadTop);
-
     this.applyThreadViewportMask();
 
     this.inputPanel.setPosition(centerX, inputTop + inputH * 0.5);
@@ -172,24 +174,39 @@ export class PhoneUI {
     this.rebuildTypedDisplay();
   }
 
-  /** Clips thread bubbles to the viewport in threadClipRoot local space (scroll uses threadContent.y). */
+  /** World-align mask graphics to threadClipRoot so GeometryMask stencil matches nested threadContent. */
+  private syncThreadMaskGraphicsWorld(w: number, h: number): void {
+    const m = this.threadClipRoot.getWorldTransformMatrix();
+    const p0 = new Phaser.Math.Vector2();
+    const pwx = new Phaser.Math.Vector2();
+    const phy = new Phaser.Math.Vector2();
+    m.transformPoint(0, 0, p0);
+    m.transformPoint(w, 0, pwx);
+    m.transformPoint(0, h, phy);
+    const worldW = Phaser.Math.Distance.BetweenPoints(p0, pwx);
+    const worldH = Phaser.Math.Distance.BetweenPoints(p0, phy);
+    const angle = Math.atan2(pwx.y - p0.y, pwx.x - p0.x);
+    this.threadMaskGraphics.setPosition(p0.x, p0.y);
+    this.threadMaskGraphics.setRotation(angle);
+    this.threadMaskGraphics.setScale(worldW / w, worldH / h);
+  }
+
+  /** Clips thread bubbles to the phone thread viewport (scroll still moves threadContent). */
   private applyThreadViewportMask(): void {
-    const w = this.contentWidth;
-    const h = this.threadViewportH;
-    const g = this.threadViewportMaskGraphics;
-    g.clear();
-    // Same base tint as phone frame so viewport gutters match the panel; mask must stay visible for WebGL stencil.
-    g.fillStyle(0x0b1220, 0.92);
-    g.fillRect(0, 0, w, h);
-    if (!this.threadViewportGeometryMask) {
-      this.threadViewportGeometryMask = g.createGeometryMask();
-      this.threadContent.setMask(this.threadViewportGeometryMask);
-    }
+    const w = Math.max(1, this.contentWidth);
+    const h = Math.max(1, this.threadViewportH);
+    this.threadContent.clearMask(true);
+    this.syncThreadMaskGraphicsWorld(w, h);
+    this.threadMaskGraphics.clear();
+    this.threadMaskGraphics.fillStyle(0xffffff, 1);
+    this.threadMaskGraphics.fillRect(0, 0, w, h);
+    this.threadContent.setMask(this.threadMaskGraphics.createGeometryMask());
   }
 
   private scrollThreadToBottom(): void {
     const extent = this.threadCursorY + this.typingRowHeight;
-    this.threadContent.setY(Math.min(0, this.threadViewportH - extent));
+    const y = Math.min(0, this.threadViewportH - extent);
+    this.threadContent.setY(y);
   }
 
   private removeTypingIndicator(): void {
