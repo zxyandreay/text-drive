@@ -1,16 +1,20 @@
 import Phaser from "phaser";
 import { PhoneUI } from "../ui/PhoneUI";
 import type { DialoguePrompt } from "../types/LevelTypes";
+import { getMessagePacing, type MessagePacing } from "../ui/messagePacing";
 
 export type TypingFailureReason = "wrong_input";
 export type TypingIncident = {
   reason: TypingFailureReason;
 };
 
-const REPLY_HINT_DELAY_MS = 850;
-
 function normalizeForCompare(value: string): string {
   return value.trim().toLowerCase();
+}
+
+function nextIncomingWithJitter(baseMs: number): number {
+  const j = Phaser.Math.Between(-40, 40);
+  return Math.max(400, baseMs + j);
 }
 
 export class TypingSystem {
@@ -24,8 +28,16 @@ export class TypingSystem {
   private completed = false;
   private incidentQueue: TypingIncident[] = [];
   private onCorrectReply?: () => void;
+
+  private pacing: MessagePacing = getMessagePacing("");
+  private composeActive = false;
+  private exchangeGeneration = 0;
+
+  private incomingDelayTimer?: Phaser.Time.TimerEvent;
+  private typingIndicatorTimer?: Phaser.Time.TimerEvent;
   private hintRevealTimer?: Phaser.Time.TimerEvent;
-  private nextPromptTimer?: Phaser.Time.TimerEvent;
+  private sendBeatTimer?: Phaser.Time.TimerEvent;
+  private nextExchangeTimer?: Phaser.Time.TimerEvent;
 
   constructor(scene: Phaser.Scene, phoneUI: PhoneUI) {
     this.scene = scene;
@@ -41,25 +53,36 @@ export class TypingSystem {
     this.scene.events.once("shutdown", this.dispose, this);
   }
 
-  private cancelTimers(): void {
+  private cancelExchangeTimers(): void {
+    this.incomingDelayTimer?.remove();
+    this.incomingDelayTimer = undefined;
+    this.typingIndicatorTimer?.remove();
+    this.typingIndicatorTimer = undefined;
     this.hintRevealTimer?.remove();
     this.hintRevealTimer = undefined;
-    this.nextPromptTimer?.remove();
-    this.nextPromptTimer = undefined;
+    this.sendBeatTimer?.remove();
+    this.sendBeatTimer = undefined;
+    this.nextExchangeTimer?.remove();
+    this.nextExchangeTimer = undefined;
   }
 
   private dispose(): void {
-    this.cancelTimers();
+    this.cancelExchangeTimers();
     this.scene.input.keyboard?.off("keydown", this.handleKeyDown, this);
   }
 
-  public startLevel(prompts: DialoguePrompt[]): void {
+  public startLevel(prompts: DialoguePrompt[], levelId: string): void {
+    this.pacing = getMessagePacing(levelId);
+    this.phoneUI.clearThread();
     this.prompts = prompts;
     this.currentIndex = 0;
     this.typedValue = "";
     this.completedCount = 0;
     this.completed = false;
     this.incidentQueue = [];
+    this.composeActive = false;
+    this.exchangeGeneration = 0;
+    this.cancelExchangeTimers();
     this.loadPrompt(0);
   }
 
@@ -79,38 +102,86 @@ export class TypingSystem {
     // Per-reply timers removed; story timer lives in GameScene.
   }
 
+  private scheduleHintReveal(gen: number, prompt: DialoguePrompt): void {
+    this.hintRevealTimer = this.scene.time.delayedCall(this.pacing.hintDelayMs, () => {
+      this.hintRevealTimer = undefined;
+      if (gen !== this.exchangeGeneration) {
+        return;
+      }
+      if (!this.isUnderPressure()) {
+        return;
+      }
+      const p = this.prompts[this.currentIndex];
+      if (!p || p !== prompt) {
+        return;
+      }
+      this.phoneUI.setReplyHint(p.reply);
+      this.composeActive = true;
+      this.phoneUI.setStatus("type while driving");
+    });
+  }
+
+  private revealPartnerAndHint(gen: number, prompt: DialoguePrompt): void {
+    this.phoneUI.setTypingIndicator(false);
+    this.phoneUI.appendPartnerMessage(prompt.incoming);
+    this.phoneUI.setStatus("read the message");
+    this.scheduleHintReveal(gen, prompt);
+  }
+
   private loadPrompt(index: number): void {
     if (this.prompts.length === 0) {
       return;
     }
 
-    this.cancelTimers();
+    this.cancelExchangeTimers();
+    this.exchangeGeneration += 1;
+    const gen = this.exchangeGeneration;
+
+    this.composeActive = false;
+    this.phoneUI.setTypingIndicator(false);
 
     const wrapped = index % this.prompts.length;
     this.currentIndex = wrapped;
     this.typedValue = "";
     const prompt = this.prompts[wrapped];
 
-    this.phoneUI.showIncoming(prompt.incoming);
     this.phoneUI.clearReplyHint();
     this.phoneUI.refreshTypedDisplay("", prompt.reply);
-    this.phoneUI.setStatus("type while driving");
+    this.phoneUI.setStatus("incoming…");
 
-    this.hintRevealTimer = this.scene.time.delayedCall(REPLY_HINT_DELAY_MS, () => {
-      this.hintRevealTimer = undefined;
+    this.incomingDelayTimer = this.scene.time.delayedCall(this.pacing.incomingDelayMs, () => {
+      this.incomingDelayTimer = undefined;
+      if (gen !== this.exchangeGeneration) {
+        return;
+      }
       if (!this.isUnderPressure()) {
         return;
       }
-      const p = this.prompts[this.currentIndex];
-      if (!p) {
-        return;
+
+      if (this.pacing.typingIndicatorMs > 0) {
+        this.phoneUI.setTypingIndicator(true);
+        this.typingIndicatorTimer = this.scene.time.delayedCall(this.pacing.typingIndicatorMs, () => {
+          this.typingIndicatorTimer = undefined;
+          if (gen !== this.exchangeGeneration) {
+            return;
+          }
+          if (!this.isUnderPressure()) {
+            return;
+          }
+          this.revealPartnerAndHint(gen, prompt);
+        });
+      } else {
+        this.revealPartnerAndHint(gen, prompt);
       }
-      this.phoneUI.setReplyHint(p.reply);
     });
   }
 
   private handleKeyDown(event: KeyboardEvent): void {
     if (!this.isUnderPressure()) {
+      return;
+    }
+
+    if (!this.composeActive) {
       return;
     }
 
@@ -129,18 +200,43 @@ export class TypingSystem {
       event.preventDefault();
       const submitted = normalizeForCompare(this.typedValue);
       if (submitted === expected) {
-        this.cancelTimers();
+        const genAtSubmit = this.exchangeGeneration;
+        this.cancelExchangeTimers();
+        this.composeActive = false;
         this.phoneUI.clearReplyHint();
+        this.phoneUI.refreshTypedDisplay("", "");
+        this.typedValue = "";
+
         this.onCorrectReply?.();
         this.completedCount += 1;
+
         if (this.completedCount >= this.prompts.length) {
-          this.completed = true;
-          this.phoneUI.setStatus("all messages sent", "#86efac");
+          this.sendBeatTimer = this.scene.time.delayedCall(this.pacing.sendBeatMs, () => {
+            this.sendBeatTimer = undefined;
+            if (genAtSubmit !== this.exchangeGeneration) {
+              return;
+            }
+            this.phoneUI.appendPlayerMessage(submitted);
+            this.completed = true;
+            this.phoneUI.setStatus("all messages sent", "#86efac");
+          });
         } else {
-          this.phoneUI.setStatus("sent next message soon", "#86efac");
-          this.nextPromptTimer = this.scene.time.delayedCall(500, () => {
-            this.nextPromptTimer = undefined;
-            this.loadPrompt(this.currentIndex + 1);
+          this.phoneUI.setStatus("sending…", "#86efac");
+          this.sendBeatTimer = this.scene.time.delayedCall(this.pacing.sendBeatMs, () => {
+            this.sendBeatTimer = undefined;
+            if (genAtSubmit !== this.exchangeGeneration) {
+              return;
+            }
+            this.phoneUI.appendPlayerMessage(submitted);
+            this.phoneUI.setStatus("sent", "#86efac");
+            const wait = nextIncomingWithJitter(this.pacing.nextIncomingMs);
+            this.nextExchangeTimer = this.scene.time.delayedCall(wait, () => {
+              this.nextExchangeTimer = undefined;
+              if (genAtSubmit !== this.exchangeGeneration) {
+                return;
+              }
+              this.loadPrompt(this.currentIndex + 1);
+            });
           });
         }
       } else {
@@ -151,6 +247,7 @@ export class TypingSystem {
     }
 
     if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+      event.preventDefault();
       this.typedValue += event.key;
       this.phoneUI.refreshTypedDisplay(this.typedValue, prompt.reply);
       this.phoneUI.setStatus("press enter when ready");
