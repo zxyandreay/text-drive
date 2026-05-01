@@ -1,6 +1,9 @@
 /** Shared typography and colors for prototype UI consistency. */
 export const UiTheme = {
-  fontFamily: "Arial",
+  /** UI body / HUD / buttons (Inter). */
+  fontFamily: "Inter, system-ui, sans-serif",
+  /** Display / wordmark only (Teko). */
+  fontDisplay: "Teko, sans-serif",
   colors: {
     bg: "#020617",
     panel: "#0f172a",
@@ -22,7 +25,7 @@ export const UiTheme = {
     /** Empty-input cursor */
     typedCursor: "#64748b",
     /** Main menu tagline (quieter than accent) */
-    menuTagline: "#7dd3fc"
+    menuTagline: "#64748b"
   },
   sizes: {
     titleLg: "26px",
@@ -45,10 +48,12 @@ export const UiTheme = {
     resultNav: "14px",
     /** Default menu / generic buttons (not result screen). */
     buttonDefault: "20px",
-    /** Main menu hero */
-    menuTitle: "36px",
-    menuTagline: "17px",
-    menuCta: "19px"
+    /** Main menu hero (Teko display) */
+    menuTitle: "60px",
+    /** Ending / secondary brand line */
+    menuTitleSm: "52px",
+    menuTagline: "14px",
+    menuCta: "20px"
   },
   /** Filled / outline button presets for result screens (hex stroke for Phaser lineStyle). */
   buttons: {
@@ -58,5 +63,10 @@ export const UiTheme = {
     secondaryStroke: 0x64748b,
     ghostFill: 0x1e293b,
     ghostStroke: 0x475569
+  },
+  /** Pre-level intro and result aftermath / reason text rhythm */
+  narrative: {
+    introLineSpacing: 8,
+    resultLineSpacing: 7
   }
 } as const;

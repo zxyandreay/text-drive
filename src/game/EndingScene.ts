@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { UiFactory } from "./ui/UiFactory";
+import { UiTheme } from "./ui/UiTheme";
 
 type EndingSceneData = {
   finalMessage?: string;
@@ -16,27 +17,30 @@ export class EndingScene extends Phaser.Scene {
       data.finalMessage ??
       "You reached the hospital parking lot.\nThe phone finally stops vibrating.\nSilence feels heavier than speed.";
 
-    this.cameras.main.setBackgroundColor("#020617");
+    this.cameras.main.setBackgroundColor(UiTheme.colors.bg);
 
-    this.add
+    const brandFont = `700 ${UiTheme.sizes.menuTitleSm} ${UiTheme.fontDisplay}`;
+    const brand = this.add
       .text(width / 2, 86, "TEXT DRIVE", {
-        fontFamily: "Arial",
-        fontSize: "44px",
-        color: "#e2e8f0"
+        font: brandFont,
+        color: UiTheme.colors.title
       })
       .setOrigin(0.5);
+    if (typeof (brand as Phaser.GameObjects.Text & { setLetterSpacing: (n: number) => void }).setLetterSpacing === "function") {
+      (brand as Phaser.GameObjects.Text & { setLetterSpacing: (n: number) => void }).setLetterSpacing(6);
+    }
 
     this.add
       .text(width / 2, 152, "Ending", {
-        fontFamily: "Arial",
+        fontFamily: UiTheme.fontFamily,
         fontSize: "24px",
-        color: "#94a3b8"
+        color: UiTheme.colors.muted
       })
       .setOrigin(0.5);
 
     this.add
       .text(width / 2, height / 2, finalMessage, {
-        fontFamily: "Arial",
+        fontFamily: UiTheme.fontFamily,
         fontSize: "24px",
         color: "#f8fafc",
         align: "center",
