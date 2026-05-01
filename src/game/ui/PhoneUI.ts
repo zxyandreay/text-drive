@@ -24,7 +24,9 @@ export class PhoneUI {
   private readonly headerBar: Phaser.GameObjects.Rectangle;
   private readonly headerText: Phaser.GameObjects.Text;
   private readonly threadClipRoot: Phaser.GameObjects.Container;
+  private readonly threadViewportMaskGraphics: Phaser.GameObjects.Graphics;
   private readonly threadContent: Phaser.GameObjects.Container;
+  private threadViewportGeometryMask: Phaser.Display.Masks.GeometryMask | null = null;
   private readonly inputPanel: Phaser.GameObjects.Rectangle;
   private readonly inputLabel: Phaser.GameObjects.Text;
   private readonly replyHintContainer: Phaser.GameObjects.Container;
@@ -66,7 +68,10 @@ export class PhoneUI {
       .setOrigin(0, 0);
 
     this.threadClipRoot = scene.add.container(0, 0);
+    this.threadViewportMaskGraphics = scene.add.graphics();
+    this.threadViewportMaskGraphics.setVisible(false);
     this.threadContent = scene.add.container(0, 0);
+    this.threadClipRoot.addAt(this.threadViewportMaskGraphics, 0);
     this.threadClipRoot.add(this.threadContent);
 
     this.inputPanel = scene.add.rectangle(0, 0, 1, 1, 0x1e293b, 0.94);
@@ -141,6 +146,8 @@ export class PhoneUI {
 
     this.threadClipRoot.setPosition(this.contentLeft, threadTop);
 
+    this.applyThreadViewportMask();
+
     this.inputPanel.setPosition(centerX, inputTop + inputH * 0.5);
     this.inputPanel.setSize(panelInnerW, inputH);
 
@@ -164,6 +171,20 @@ export class PhoneUI {
       this.rebuildHintLines();
     }
     this.rebuildTypedDisplay();
+  }
+
+  /** Clips thread bubbles to the viewport in threadClipRoot local space (scroll uses threadContent.y). */
+  private applyThreadViewportMask(): void {
+    const w = this.contentWidth;
+    const h = this.threadViewportH;
+    const g = this.threadViewportMaskGraphics;
+    g.clear();
+    g.fillStyle(0xffffff, 1);
+    g.fillRect(0, 0, w, h);
+    if (!this.threadViewportGeometryMask) {
+      this.threadViewportGeometryMask = g.createGeometryMask();
+      this.threadContent.setMask(this.threadViewportGeometryMask);
+    }
   }
 
   private scrollThreadToBottom(): void {
