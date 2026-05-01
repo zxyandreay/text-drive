@@ -30,6 +30,10 @@ const STORY_BAR_H = 4;
 const STORY_BAR_BOTTOM_PAD = 3;
 /** Hide numeric msgs label when the header is too narrow. */
 const STORY_LABEL_MIN_TRACK_W = 240;
+/** Extra inset so the story strip sits clearly inside the top bar (visual fit). */
+const STORY_TRACK_EXTRA_PAD_X = 2;
+/** Gap from track right edge to numeric label anchor (origin 1). */
+const STORY_LABEL_PAD = 4;
 
 type GameSceneData = {
   startLevelId?: string;
@@ -270,7 +274,8 @@ export class GameScene extends Phaser.Scene {
     this.hintCardText.setDepth(L.hudDepth + 1);
 
     this.storyProgressTrack = this.add.rectangle(0, 0, 1, STORY_BAR_H, 0x1e293b, 0.95);
-    this.storyProgressTrack.setStrokeStyle(1, 0x334155, 0.65);
+    this.storyProgressTrack.setStrokeStyle(0);
+    this.storyProgressTrack.setOrigin(0, 0.5);
     this.storyProgressTrack.setDepth(L.headerDepth - 0.5);
 
     this.storyProgressFill = this.add.rectangle(0, 0, 1, STORY_BAR_H, 0x38bdf8, 0.92);
@@ -288,15 +293,27 @@ export class GameScene extends Phaser.Scene {
     this.storyProgressLabel.setDepth(L.headerDepth + 1);
   }
 
+  private getStoryTrackLayout(L: GameplayLayoutMetrics): {
+    trackLeft: number;
+    trackRight: number;
+    trackW: number;
+    trackCy: number;
+  } {
+    const leftInset = L.marginX + HUD_BAR_PAD_X;
+    const rightInset = L.marginX + HUD_RIGHT_PAD;
+    const trackLeft = leftInset;
+    const trackRight = L.width - rightInset - STORY_TRACK_EXTRA_PAD_X;
+    const trackW = Math.max(0, trackRight - trackLeft);
+    const trackCy = L.topBarTop + L.topBarH - STORY_BAR_BOTTOM_PAD - STORY_BAR_H / 2;
+    return { trackLeft, trackRight, trackW, trackCy };
+  }
+
   private applyHudLayout(L: GameplayLayoutMetrics): void {
     const storyTextBand = L.topBarH - STORY_BAR_H - STORY_BAR_BOTTOM_PAD;
     const rowY = L.topBarTop + storyTextBand * 0.5;
     const leftInset = L.marginX + HUD_BAR_PAD_X;
     const rightInset = L.marginX + HUD_RIGHT_PAD;
-    const trackLeft = leftInset;
-    const trackRight = L.width - rightInset;
-    const trackW = Math.max(0, trackRight - trackLeft);
-    const trackCy = L.topBarTop + L.topBarH - STORY_BAR_BOTTOM_PAD - STORY_BAR_H / 2;
+    const { trackLeft, trackW, trackCy } = this.getStoryTrackLayout(L);
 
     this.topBarBg.setPosition(L.width * 0.5, L.topBarTop + L.topBarH * 0.5);
     this.topBarBg.width = L.width - L.marginX * 2;
@@ -320,7 +337,7 @@ export class GameScene extends Phaser.Scene {
 
     this.statusText.setPosition(L.width - rightInset, rowY);
 
-    this.storyProgressTrack.setPosition(trackLeft + trackW * 0.5, trackCy);
+    this.storyProgressTrack.setPosition(trackLeft, trackCy);
     this.storyProgressTrack.width = trackW;
     this.storyProgressTrack.height = STORY_BAR_H;
 
@@ -343,12 +360,7 @@ export class GameScene extends Phaser.Scene {
       return;
     }
     const L = this.layout;
-    const leftInset = L.marginX + HUD_BAR_PAD_X;
-    const rightInset = L.marginX + HUD_RIGHT_PAD;
-    const trackLeft = leftInset;
-    const trackRight = L.width - rightInset;
-    const trackW = Math.max(0, trackRight - trackLeft);
-    const trackCy = L.topBarTop + L.topBarH - STORY_BAR_BOTTOM_PAD - STORY_BAR_H / 2;
+    const { trackLeft, trackRight, trackW, trackCy } = this.getStoryTrackLayout(L);
 
     const level = this.levelManager.getCurrentLevel();
     const total = Math.max(0, this.dialogueManager.getPrompts(level.id).length);
@@ -365,7 +377,7 @@ export class GameScene extends Phaser.Scene {
     this.storyProgressLabel.setVisible(showLabel);
     if (showLabel) {
       this.storyProgressLabel.setText(`${completed} / ${total}`);
-      this.storyProgressLabel.setPosition(trackRight - 2, trackCy);
+      this.storyProgressLabel.setPosition(trackRight - STORY_LABEL_PAD, trackCy);
     }
   }
 
