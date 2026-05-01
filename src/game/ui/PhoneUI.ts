@@ -25,8 +25,6 @@ export class PhoneUI {
   private readonly headerText: Phaser.GameObjects.Text;
   private readonly threadClipRoot: Phaser.GameObjects.Container;
   private readonly threadContent: Phaser.GameObjects.Container;
-  private readonly threadMaskG: Phaser.GameObjects.Graphics;
-  private threadMask?: Phaser.Display.Masks.GeometryMask;
   private readonly inputPanel: Phaser.GameObjects.Rectangle;
   private readonly inputLabel: Phaser.GameObjects.Text;
   private readonly replyHintContainer: Phaser.GameObjects.Container;
@@ -68,10 +66,7 @@ export class PhoneUI {
       .setOrigin(0, 0);
 
     this.threadClipRoot = scene.add.container(0, 0);
-    this.threadMaskG = scene.add.graphics();
-    this.threadMaskG.setVisible(false);
     this.threadContent = scene.add.container(0, 0);
-    this.threadClipRoot.add(this.threadMaskG);
     this.threadClipRoot.add(this.threadContent);
 
     this.inputPanel = scene.add.rectangle(0, 0, 1, 1, 0x1e293b, 0.94);
@@ -145,13 +140,6 @@ export class PhoneUI {
     this.threadViewportH = Math.max(48, inputTop - threadTop - THREAD_GAP_ABOVE_INPUT);
 
     this.threadClipRoot.setPosition(this.contentLeft, threadTop);
-    this.threadMaskG.clear();
-    this.threadMaskG.fillStyle(0xffffff, 1);
-    this.threadMaskG.fillRect(0, 0, this.contentWidth, this.threadViewportH);
-    if (!this.threadMask) {
-      this.threadMask = this.threadMaskG.createGeometryMask();
-      this.threadContent.setMask(this.threadMask);
-    }
 
     this.inputPanel.setPosition(centerX, inputTop + inputH * 0.5);
     this.inputPanel.setSize(panelInnerW, inputH);
@@ -209,11 +197,23 @@ export class PhoneUI {
   }
 
   public clearThread(): void {
+    this.clearReplyHint();
     this.chatHistory = [];
     this.removeTypingIndicator();
     this.threadContent.removeAll(true);
     this.threadCursorY = 0;
     this.scrollThreadToBottom();
+  }
+
+  /** Last partner bubble body in thread order (normalized). */
+  public getLastPartnerMessageBody(): string | null {
+    for (let i = this.chatHistory.length - 1; i >= 0; i--) {
+      const e = this.chatHistory[i];
+      if (e.kind === "partner") {
+        return e.body;
+      }
+    }
+    return null;
   }
 
   public appendPartnerMessage(body: string): void {

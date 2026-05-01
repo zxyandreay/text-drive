@@ -112,8 +112,15 @@ export class TypingSystem {
         return;
       }
       const p = this.prompts[this.currentIndex];
-      if (!p || p !== prompt) {
+      const sameExchange =
+        !!p && p.reply === prompt.reply && p.incoming === prompt.incoming;
+      if (!sameExchange) {
         return;
+      }
+      const expectedIncoming = normalizeForCompare(prompt.incoming);
+      const lastPartner = this.phoneUI.getLastPartnerMessageBody();
+      if (lastPartner !== expectedIncoming) {
+        this.phoneUI.appendPartnerMessage(prompt.incoming);
       }
       this.phoneUI.setReplyHint(p.reply);
       this.composeActive = true;
