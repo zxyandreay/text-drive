@@ -92,6 +92,16 @@ export class TypingSystem {
     return this.completed;
   }
 
+  /** Successfully submitted replies this level (increments only on correct Enter). */
+  public getCompletedDialogueSteps(): number {
+    return this.completedCount;
+  }
+
+  /** Total dialogue exchanges in the active level (prompts length). */
+  public getDialogueStepTotal(): number {
+    return this.prompts.length;
+  }
+
   public isUnderPressure(): boolean {
     return !this.completed && this.prompts.length > 0;
   }

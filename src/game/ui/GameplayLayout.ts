@@ -37,7 +37,8 @@ export function computeGameplayLayout(scale: Phaser.Scale.ScaleManager): Gamepla
   const height = scale.height;
   const marginX = Phaser.Math.Clamp(Math.round(width * 0.022), 8, 18);
   const marginY = Phaser.Math.Clamp(Math.round(height * 0.02), 8, 14);
-  const topBarH = 48;
+  /** Includes a thin story/dialogue progress strip along the bottom of the top bar. */
+  const topBarH = 56;
   const topBarTop = marginY;
 
   const hintW = Phaser.Math.Clamp(Math.round(width * 0.19), 118, 172);
