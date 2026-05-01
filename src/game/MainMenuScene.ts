@@ -12,8 +12,14 @@ const BTN_W = 276;
 const BTN_H = 52;
 const STRIP_CENTER_Y_FRAC = 0.78;
 
-/** Accent color as hex for Graphics APIs. */
+/** Accent color as hex for Graphics APIs (same as animated center dashes). */
 const ACCENT_LINE = 0x93c5fd;
+/** Stroke alpha for faint road lines — aligned with animated dash pass (~0.13). */
+const ROAD_LINE_ALPHA = 0.12;
+/** Horizon / vanishing point Y and top of centerline strip (must match backdrop). */
+const ROAD_VANISH_Y_FRAC = 0.36;
+/** Where road meets bottom of frame. */
+const ROAD_BOTTOM_Y_FRAC = 0.92;
 
 /**
  * Teko bold "TEXT DRIVE" is very wide; cap by usable width so it does not clip the canvas edges.
@@ -127,16 +133,20 @@ export class MainMenuScene extends Phaser.Scene {
     const w = this.scale.width;
     const h = this.scale.height;
     const x = w * 0.5;
-    const y0 = h * 0.44;
-    const y1 = h * 0.92;
+    const y0 = h * ROAD_VANISH_Y_FRAC;
+    const y1 = h * ROAD_BOTTOM_Y_FRAC;
     const dash = 12;
     const gap = 10;
-    const speed = 22;
-    const phase = ((this.time.now / 1000) * speed) % (dash + gap);
+    const mod = dash + gap;
+    /** Increasing scroll shifts dash starts downward = forward motion (stripes come from horizon toward you). */
+    const scroll = ((this.time.now / 1000) * 22) % mod;
 
     g.clear();
-    g.lineStyle(2, ACCENT_LINE, 0.13);
-    let y = y0 - phase;
+    g.lineStyle(2, ACCENT_LINE, ROAD_LINE_ALPHA + 0.01);
+    let y = y0 + scroll;
+    while (y > y0 - mod) {
+      y -= mod;
+    }
     while (y < y1) {
       const segStart = Math.max(y0, y);
       const segEnd = Math.min(y + dash, y1);
@@ -146,16 +156,39 @@ export class MainMenuScene extends Phaser.Scene {
         g.lineTo(x, segEnd);
         g.strokePath();
       }
-      y += dash + gap;
+      y += mod;
     }
   }
 
-  /** Flat game background; road motion is the animated centerline in update(). */
+  /**
+   * Flat background plus faint static horizon and road outline (same tint as center dashes).
+   * Animated segment is drawn in update().
+   */
   private drawBackdrop(w: number, h: number): void {
     const g = this.add.graphics();
     const bg = Phaser.Display.Color.HexStringToColor(UiTheme.colors.bg).color;
     g.fillStyle(bg, 1);
     g.fillRect(0, 0, w, h);
+
+    const vanishX = w * 0.5;
+    const vanishY = h * ROAD_VANISH_Y_FRAC;
+    g.lineStyle(1, ACCENT_LINE, ROAD_LINE_ALPHA);
+
+    g.beginPath();
+    g.moveTo(w * 0.06, vanishY);
+    g.lineTo(w * 0.94, vanishY);
+    g.strokePath();
+
+    g.beginPath();
+    g.moveTo(-w * 0.04, h * 0.96);
+    g.lineTo(vanishX, vanishY);
+    g.strokePath();
+
+    g.beginPath();
+    g.moveTo(w * 1.04, h * 0.96);
+    g.lineTo(vanishX, vanishY);
+    g.strokePath();
+
     g.setDepth(0);
   }
 }
