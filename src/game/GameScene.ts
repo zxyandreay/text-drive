@@ -25,6 +25,11 @@ const HUD_GAP_AFTER_BACK = 14;
 const HUD_TITLE_GAP = 14;
 const HUD_STATS_GAP = 20;
 const HUD_STAT_STEP = 108;
+/** Thin dialogue progress strip inside the top HUD (below stat text row). */
+const STORY_BAR_H = 4;
+const STORY_BAR_BOTTOM_PAD = 3;
+/** Hide numeric msgs label when the header is too narrow. */
+const STORY_LABEL_MIN_TRACK_W = 240;
 
 type GameSceneData = {
   startLevelId?: string;
@@ -57,6 +62,9 @@ export class GameScene extends Phaser.Scene {
   private hintCardText!: Phaser.GameObjects.Text;
   private backHit!: Phaser.GameObjects.Rectangle;
   private backLabel!: Phaser.GameObjects.Text;
+  private storyProgressTrack!: Phaser.GameObjects.Rectangle;
+  private storyProgressFill!: Phaser.GameObjects.Rectangle;
+  private storyProgressLabel!: Phaser.GameObjects.Text;
 
   private gameOver = false;
   private transitioningLevel = false;
@@ -116,6 +124,7 @@ export class GameScene extends Phaser.Scene {
     this.typingSystem = new TypingSystem(this, this.phoneUI);
     this.typingSystem.setOnCorrectReply(() => {
       this.runScore.addCorrectReply();
+      this.refreshStoryProgressHud();
     });
     this.typingSystem.create();
     this.stressSystem = new StressSystem(this, this.drivingSystem, this.obstacleSystem, this.phoneUI);
@@ -259,12 +268,35 @@ export class GameScene extends Phaser.Scene {
       })
       .setOrigin(0.5, 0.5);
     this.hintCardText.setDepth(L.hudDepth + 1);
+
+    this.storyProgressTrack = this.add.rectangle(0, 0, 1, STORY_BAR_H, 0x1e293b, 0.95);
+    this.storyProgressTrack.setStrokeStyle(1, 0x334155, 0.65);
+    this.storyProgressTrack.setDepth(L.headerDepth - 0.5);
+
+    this.storyProgressFill = this.add.rectangle(0, 0, 1, STORY_BAR_H, 0x38bdf8, 0.92);
+    this.storyProgressFill.setStrokeStyle(0);
+    this.storyProgressFill.setOrigin(0, 0.5);
+    this.storyProgressFill.setDepth(L.headerDepth - 0.4);
+
+    this.storyProgressLabel = this.add
+      .text(0, 0, "", {
+        fontFamily: UiTheme.fontFamily,
+        fontSize: UiTheme.sizes.hint,
+        color: UiTheme.colors.muted
+      })
+      .setOrigin(1, 0.5);
+    this.storyProgressLabel.setDepth(L.headerDepth + 1);
   }
 
   private applyHudLayout(L: GameplayLayoutMetrics): void {
-    const rowY = L.topBarTop + L.topBarH * 0.5;
+    const storyTextBand = L.topBarH - STORY_BAR_H - STORY_BAR_BOTTOM_PAD;
+    const rowY = L.topBarTop + storyTextBand * 0.5;
     const leftInset = L.marginX + HUD_BAR_PAD_X;
     const rightInset = L.marginX + HUD_RIGHT_PAD;
+    const trackLeft = leftInset;
+    const trackRight = L.width - rightInset;
+    const trackW = Math.max(0, trackRight - trackLeft);
+    const trackCy = L.topBarTop + L.topBarH - STORY_BAR_BOTTOM_PAD - STORY_BAR_H / 2;
 
     this.topBarBg.setPosition(L.width * 0.5, L.topBarTop + L.topBarH * 0.5);
     this.topBarBg.width = L.width - L.marginX * 2;
@@ -288,6 +320,12 @@ export class GameScene extends Phaser.Scene {
 
     this.statusText.setPosition(L.width - rightInset, rowY);
 
+    this.storyProgressTrack.setPosition(trackLeft + trackW * 0.5, trackCy);
+    this.storyProgressTrack.width = trackW;
+    this.storyProgressTrack.height = STORY_BAR_H;
+
+    this.refreshStoryProgressHud();
+
     const toneY = L.topBarTop + L.topBarH + 6;
     this.toneText.setPosition(leftInset, toneY);
     this.toneText.setWordWrapWidth(Math.max(200, L.width - leftInset - rightInset), true);
@@ -297,6 +335,38 @@ export class GameScene extends Phaser.Scene {
     this.hintCardBg.setSize(hint.w, hint.h);
     this.hintCardText.setPosition(hint.cx, hint.cy - 6);
     this.hintCardText.setWordWrapWidth(Math.max(96, hint.w - 16), true);
+  }
+
+  /** Dialogue steps only: correct Enter submits / total prompts for current level (not level 1/3). */
+  private refreshStoryProgressHud(): void {
+    if (!this.storyProgressTrack || !this.storyProgressFill || !this.storyProgressLabel) {
+      return;
+    }
+    const L = this.layout;
+    const leftInset = L.marginX + HUD_BAR_PAD_X;
+    const rightInset = L.marginX + HUD_RIGHT_PAD;
+    const trackLeft = leftInset;
+    const trackRight = L.width - rightInset;
+    const trackW = Math.max(0, trackRight - trackLeft);
+    const trackCy = L.topBarTop + L.topBarH - STORY_BAR_BOTTOM_PAD - STORY_BAR_H / 2;
+
+    const level = this.levelManager.getCurrentLevel();
+    const total = Math.max(0, this.dialogueManager.getPrompts(level.id).length);
+    const completedRaw = this.flowState === "gameplay" ? this.typingSystem.getCompletedDialogueSteps() : 0;
+    const completed = total > 0 ? Math.min(completedRaw, total) : 0;
+    const ratio = total > 0 ? completed / total : 0;
+    const fillW = trackW * ratio;
+
+    this.storyProgressFill.setPosition(trackLeft, trackCy);
+    this.storyProgressFill.width = Math.max(0, fillW);
+    this.storyProgressFill.height = STORY_BAR_H;
+
+    const showLabel = trackW >= STORY_LABEL_MIN_TRACK_W;
+    this.storyProgressLabel.setVisible(showLabel);
+    if (showLabel) {
+      this.storyProgressLabel.setText(`${completed} / ${total}`);
+      this.storyProgressLabel.setPosition(trackRight - 2, trackCy);
+    }
   }
 
   private handleResize(): void {
@@ -535,6 +605,7 @@ export class GameScene extends Phaser.Scene {
         ease: "Sine.easeOut"
       });
     }
+    this.refreshStoryProgressHud();
   }
 
   private handleLevelComplete(): void {
