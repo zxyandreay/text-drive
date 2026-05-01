@@ -6,13 +6,13 @@
       "failure": "you get there late and a little rattled and the first few minutes never quite smooth out. the date still happens but something stays slightly off. you keep talking after that though the start is harder than it needed to be"
     },
     "prompts": [
-      { "incoming": "hey are you close", "reply": "about ten minutes away" },
-      { "incoming": "im outside already", "reply": "give me a minute to park" },
-      { "incoming": "what are you wearing", "reply": "blue jacket black jeans" },
-      { "incoming": "okay i think i see you", "reply": "if thats me look calm" },
-      { "incoming": "too late im nervous", "reply": "same here" },
-      { "incoming": "do you want popcorn or coffee after", "reply": "popcorn first coffee after" },
-      { "incoming": "text me when you park", "reply": "im pulling in now" },
+      { "incoming": "hey where are you?", "reply": "otw" },
+      { "incoming": "are you close?", "reply": "few minutes" },
+      { "incoming": "what are you wearing?", "reply": "blue jacket" },
+      { "incoming": "okay im at the place", "reply": "almost there" },
+      { "incoming": "im nervous", "reply": "same here" },
+      { "incoming": "do you want coffee or tea?", "reply": "coffee please" },
+      { "incoming": "text me when you are near", "reply": "im pulling in now" },
       { "incoming": "drive safe", "reply": "almost there" }
     ]
   },
@@ -24,14 +24,14 @@
     },
     "prompts": [
       { "incoming": "will you make it by seven", "reply": "more like seven ten" },
-      { "incoming": "the kids keep asking where you are", "reply": "tell them im bringing dinner" },
+      { "incoming": "the kids keep asking where you are", "reply": "tell them im bringing pizza" },
       { "incoming": "did you call the sitter", "reply": "yes she can stay later" },
-      { "incoming": "please dont walk in distracted again", "reply": "i know just let me get home" },
-      { "incoming": "we still need to talk about saturday", "reply": "i remember we will talk tonight" },
+      { "incoming": "please dont walk in distracted again", "reply": "i know, just let me get home" },
+      { "incoming": "we still need to talk about saturday", "reply": "i remember, we will talk tonight" },
       { "incoming": "your mom called twice", "reply": "i will call her after dinner" },
-      { "incoming": "can you stop for milk", "reply": "yes and paper towels" },
-      { "incoming": "thank you", "reply": "im trying to help" },
-      { "incoming": "just get home safe", "reply": "on my way" }
+      { "incoming": "can you stop for milk", "reply": "i will try" },
+      { "incoming": "thank you", "reply": "gonna stop by store" },
+      { "incoming": "just get home safe, i love you", "reply": "i love you too" }
     ]
   },
   "dying-wife": {
@@ -41,13 +41,13 @@
       "failure": "you reach the ward a few minutes too late and spend the rest of the night listening to other people describe what you missed. the drive home is silent except for every sound your phone still makes. after that you stop answering messages behind the wheel"
     },
     "prompts": [
-      { "incoming": "where are you", "reply": "five minutes maybe less" },
+      { "incoming": "where are you?", "reply": "five minutes maybe less" },
       { "incoming": "she woke up and asked for you", "reply": "tell her im almost there" },
-      { "incoming": "her breathing changed", "reply": "is the doctor with her" },
+      { "incoming": "her breathing changed", "reply": "is the doctor with her?" },
       { "incoming": "yes they are here now", "reply": "please keep talking to her" },
       { "incoming": "do you want me to say anything", "reply": "tell her i love her" },
       { "incoming": "parking is full", "reply": "im leaving the car and running" },
-      { "incoming": "use the east entrance", "reply": "im at the door now" },
+      { "incoming": "use the east entrance", "reply": "im pulling in" },
       { "incoming": "hurry", "reply": "im coming" }
     ]
   }
