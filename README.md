@@ -121,46 +121,87 @@ In the repo **Settings → Pages**, set the source to **GitHub Actions** if need
 
 ## Project structure
 
+Top-level layout of the **tracked** source (no `node_modules` / `dist`). Comments describe what each part owns.
+
 ```text
+# --- CI / deployment ---
+# GitHub Actions workflow: npm ci, build with VITE_BASE_PATH, upload dist, deploy Pages.
 .github/workflows/
-  deploy-pages.yml       # Build + deploy dist to GitHub Pages
+  deploy-pages.yml
+
+# --- Root tooling & HTML shell ---
+# package.json — npm scripts (dev, build, preview, gh), Phaser + devDependencies.
+# package-lock.json — reproducible install tree for npm ci (used in CI).
+# tsconfig.json — TypeScript compiler options for the app.
+# vite.config.ts — base URL from VITE_BASE_PATH (local “/”, Pages “/<repo>/”), dev server open.
+# index.html — Google Fonts links, hidden font-priming span, <div id="app"> for Phaser parent.
+# README.md — this documentation.
+# .gitignore — excludes node_modules, dist, .DS_Store, *.local.
+package.json
+package-lock.json
+tsconfig.json
+vite.config.ts
+index.html
+README.md
+.gitignore
+
+# --- Helper scripts ---
+# Windows: prepends common install paths so `gh` works when PATH is trimmed (agents, minimal shells).
 scripts/
-  invoke-gh.ps1          # Windows helper for GitHub CLI when PATH is trimmed
-index.html               # Google Fonts links, font priming span, #app mount
+  invoke-gh.ps1
+
+# --- Application entry & global CSS ---
+# main.ts — async font load, Phaser.Game config (900×540, FIT, center), scene list & boot order.
+# style.css — page/body styles around the canvas (not in-canvas Phaser styling).
 src/
+  main.ts
+  style.css
+
+  # --- Static narrative & tuning data (loaded at runtime) ---
+  # levels.json — per-level id, title, tone, introNarration[], road/story timers, stress cap, speeds.
+  # dialogue.json — prompts, expected replies, outcomes (success/failure aftermath), level-keyed threads.
   data/
     dialogue.json
     levels.json
+
+  # --- Phaser scenes & gameplay modules ---
   game/
-    MainMenuScene.ts
-    LevelSelectScene.ts
-    GameScene.ts
-    ResultScene.ts
-    EndingScene.ts
+    # Scene flow: menu → select → (intro) → play → result → ending; see Current game flow in this README.
+    MainMenuScene.ts      # Wordmark, road backdrop + animated dashes, START → LevelSelectScene.
+    LevelSelectScene.ts   # LEVEL SELECT grid/cards, unlock badges, launch GameScene with level id.
+    GameScene.ts          # Imports levels.json + dialogue.json; main loop: road + phone UI, systems, intro gate, timer.
+    ResultScene.ts        # Two-step UI: score card, then aftermath; writes progress/best on success.
+    EndingScene.ts        # Short closing beat after final level success → back to main menu.
+
+    # managers/ — state that spans UI and systems (data, dialogue, persistence, scoring).
     managers/
-      DialogueManager.ts
-      LevelManager.ts
-      ProgressManager.ts  # v2 save, unlock derivation, sequential completion coercion
-      RunScore.ts
+      DialogueManager.ts  # In-memory dialogue API: prompts, outcome lines, outro by level id (data wired in GameScene).
+      LevelManager.ts       # Ordered LevelConfig list, current index, set-by-id, next level id, advance helpers.
+      ProgressManager.ts    # localStorage text-drive-progress-v2, v1 migration, unlocks, ordered completion.
+      RunScore.ts           # Point rules: correct sends, time left, penalties, level clear bonus.
+
+    # systems/ — per-frame or input-driven gameplay pieces used by GameScene.
     systems/
-      DrivingSystem.ts
-      ObstacleSystem.ts
-      StressSystem.ts
-      TypingSystem.ts
+      DrivingSystem.ts      # Mouse steering, car position/limits vs road.
+      ObstacleSystem.ts     # Spawn cadence, movement, collision with player.
+      StressSystem.ts       # Stress from pressure/crashes; overload can end the run.
+      TypingSystem.ts       # Keyboard + reply buffer, per-prompt pacing (incoming/hint/send), Enter to validate/send.
+
+    # types/ — shared TypeScript shapes for levels and related JSON.
     types/
-      LevelTypes.ts
+      LevelTypes.ts         # Level definition types aligned with levels.json.
+
+    # ui/ — reusable layout, phone thread, buttons, and typography tokens (no Phaser “Scene” classes).
     ui/
-      ChatBubbleRow.ts
-      GameplayLayout.ts
-      LevelIntroOverlay.ts
-      messagePacing.ts
-      narrativeLayout.ts    # formatNarrativeBody, column width, measure wrap
-      PhoneUI.ts
-      typingHighlightLayout.ts
-      UiFactory.ts
-      UiTheme.ts
-  main.ts
-  style.css
+      ChatBubbleRow.ts      # Factory helpers for partner bubbles, player bubbles, typing indicator row.
+      GameplayLayout.ts     # Metrics for road strip vs phone panel, safe areas, reply box geometry.
+      LevelIntroOverlay.ts  # Full-screen intro (title, body, continue, optional ← levels).
+      messagePacing.ts      # Per-level delays (incoming, hint, send beat) keyed by level id.
+      narrativeLayout.ts    # Measured word wrap for intro/result prose (column width vs panel).
+      PhoneUI.ts            # Phone chrome, scrollable chat, reply field visuals, status line.
+      typingHighlightLayout.ts  # Monospace line wrap + character positions for hint vs typed overlay.
+      UiFactory.ts          # Buttons, panels, hit rectangles + labels (reliable picking under scale).
+      UiTheme.ts            # Colors, font sizes, spacing tokens shared across scenes.
 ```
 
 ## Future improvements / limitations
