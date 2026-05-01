@@ -32,7 +32,7 @@ const BY_LEVEL: Record<string, MessagePacing> = {
     nextIncomingMs: 1050,
     typingIndicatorMs: 420
   },
-  "dying-wife": {
+  hospital: {
     incomingDelayMs: 300,
     hintDelayMs: 400,
     sendBeatMs: 170,

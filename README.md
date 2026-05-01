@@ -27,7 +27,7 @@ There are **three** narrative levels (in order):
 
 1. **Level 1: First Date** (`first-date`)
 2. **Level 2: Marriage** (`marriage`)
-3. **Level 3: Hospital** (`dying-wife` — internal id used in data and pacing)
+3. **Level 3: Hospital** (internal id: `hospital`)
 
 ## Features
 
@@ -43,7 +43,7 @@ There are **three** narrative levels (in order):
 - **Stress feedback**: wrong submits, crashes, and overload push a **stress** meter; incidents also trigger **steering delay**, temporary **obstacle speed boost**, phone **vibrate**, and light **camera shake** ([`StressSystem`](src/game/systems/StressSystem.ts), [`ObstacleSystem`](src/game/systems/ObstacleSystem.ts)).
 - **Two-step result flow**: score card first (**← level select** in the corner), then **aftermath** copy with primary/secondary actions (e.g. **play next level**, **play again**, **main menu**, **continue to ending** on final success).
 - **Narrative text layout**: intro bodies and result **aftermath** / **failure reason** use **measurement-based word wrap** (`src/game/ui/narrativeLayout.ts`) so line length matches Phaser text metrics; column width is capped for readability and scales with panel width.
-- **Phone messaging UI**: scrollable chat (partner / player bubbles), optional typing indicator, per-level pacing in `src/game/ui/messagePacing.ts` (keys: `first-date`, `marriage`, `dying-wife`). Reply hints and typed feedback use shared monospace layout logic in `src/game/ui/typingHighlightLayout.ts` (word-aware wrapping).
+- **Phone messaging UI**: scrollable chat (partner / player bubbles), optional typing indicator, per-level pacing in `src/game/ui/messagePacing.ts` (keys: `first-date`, `marriage`, `hospital`). Reply hints and typed feedback use shared monospace layout logic in `src/game/ui/typingHighlightLayout.ts` (word-aware wrapping).
 - **Typography**: [Google Fonts](https://fonts.google.com/) **Teko** (700) for display titles / wordmark; **Inter** for UI and body. `src/main.ts` waits on `document.fonts.load` / `document.fonts.ready` before booting Phaser to reduce font flash. **Note:** Phaser `Text` must use `fontFamily` + `fontSize` + `fontStyle` (or a 3-token `font` string) — the engine’s `font` shorthand parser breaks stacks like `Teko, sans-serif`.
 
 ## Current game flow
