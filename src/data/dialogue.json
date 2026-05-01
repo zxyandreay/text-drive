@@ -1,62 +1,54 @@
 {
   "first-date": {
-    "outro": "you got through the first conversation",
+    "outro": "you make it through the drive and the first hello waits ahead",
     "outcome": {
-      "success": "you park and see her wave from under the theater light. the night is awkward and sweet and it feels worth the risk you took. later you start texting every day and the road between you gets shorter",
-      "failure": "you arrive flustered and the first hello lands off beat. you still sit together but the evening carries a small distance. you keep talking after that yet both of you learn how easily timing can hurt"
+      "success": "you find her by the theater and the night settles once you stop looking at your phone. the conversation is awkward in the good way and easy after that. before long the two of you are texting every day",
+      "failure": "you get there late and a little rattled and the first few minutes never quite smooth out. the date still happens but something stays slightly off. you keep talking after that though the start is harder than it needed to be"
     },
     "prompts": [
-      { "incoming": "hey are you close", "reply": "almost there maybe ten minutes" },
-      { "incoming": "im nervous lol", "reply": "me too but in a good way" },
-      { "incoming": "what parking lot", "reply": "the one by the theater sign" },
-      { "incoming": "ok im saving you a spot", "reply": "dont get a ticket for me" },
-      { "incoming": "are you wearing the jacket", "reply": "yeah the blue one" },
-      { "incoming": "cute", "reply": "you havent even seen me yet" },
-      { "incoming": "i can imagine", "reply": "hurry up im cold" },
-      { "incoming": "coffee after", "reply": "if you still like me" },
-      { "incoming": "i already like you", "reply": "you are trouble" },
-      { "incoming": "good trouble i hope", "reply": "the best kind" },
-      { "incoming": "ping me when you park", "reply": "will do watch the road" },
-      { "incoming": "drive safe", "reply": "im trying" }
+      { "incoming": "hey are you close", "reply": "about ten minutes away" },
+      { "incoming": "im outside already", "reply": "give me a minute to park" },
+      { "incoming": "what are you wearing", "reply": "blue jacket black jeans" },
+      { "incoming": "okay i think i see you", "reply": "if thats me look calm" },
+      { "incoming": "too late im nervous", "reply": "same here" },
+      { "incoming": "do you want popcorn or coffee after", "reply": "popcorn first coffee after" },
+      { "incoming": "text me when you park", "reply": "im pulling in now" },
+      { "incoming": "drive safe", "reply": "almost there" }
     ]
   },
   "marriage": {
-    "outro": "the argument pauses but the tension stays",
+    "outro": "you get home but the real conversation is still waiting",
     "outcome": {
-      "success": "you make it home before the food goes cold. the talk is still heavy but you stay at the table and finish it together. weeks later the hospital calls start and the old arguments feel smaller",
-      "failure": "you walk in late and tired and the room goes quiet first. the fight stretches into the night and nothing really gets resolved. when health scares begin you both carry this unfinished weight"
+      "success": "you get home in time to eat together and the talk that follows is still difficult but calmer than it could have been. later when the hospital visits begin the two of you hold on to nights like this",
+      "failure": "you walk in late and tense and the conversation hardens before either of you can slow it down. the house is quiet after but not peaceful. later when the hospital calls start this night is one of the things you both remember"
     },
     "prompts": [
-      { "incoming": "will you be home by seven", "reply": "i am aiming for 655" },
-      { "incoming": "the kids asked three times", "reply": "tell them im carrying pizza" },
-      { "incoming": "you forgot to confirm the sitter", "reply": "texted her at lunch she said yes" },
-      { "incoming": "i need you present tonight not half here", "reply": "i know im sorry traffic is bad" },
-      { "incoming": "we talked about this", "reply": "i remember im doing what i can" },
-      { "incoming": "can you stop at the store", "reply": "milk and the paper plates" },
-      { "incoming": "already on the list near the door", "reply": "thank you" },
-      { "incoming": "your mother called", "reply": "i will call her back after dinner" },
-      { "incoming": "please do not brush it off", "reply": "i wont i promise" },
-      { "incoming": "i need a clear answer about saturday", "reply": "yes we can host i will clean sunday" },
-      { "incoming": "okay", "reply": "okay" },
-      { "incoming": "i love you drive safe", "reply": "love you too" }
+      { "incoming": "will you make it by seven", "reply": "more like seven ten" },
+      { "incoming": "the kids keep asking where you are", "reply": "tell them im bringing dinner" },
+      { "incoming": "did you call the sitter", "reply": "yes she can stay later" },
+      { "incoming": "please dont walk in distracted again", "reply": "i know just let me get home" },
+      { "incoming": "we still need to talk about saturday", "reply": "i remember we will talk tonight" },
+      { "incoming": "your mom called twice", "reply": "i will call her after dinner" },
+      { "incoming": "can you stop for milk", "reply": "yes and paper towels" },
+      { "incoming": "thank you", "reply": "im trying to help" },
+      { "incoming": "just get home safe", "reply": "on my way" }
     ]
   },
   "dying-wife": {
-    "outro": "you keep driving but something is already slipping away",
+    "outro": "the road ends but the worst part is still ahead",
     "outcome": {
-      "success": "you reach her room and take her hand before the monitors settle. there is little left to say so you stay and breathe with her. afterward the silence follows you home and you finally stop replying while driving",
-      "failure": "you reach the ward just after the room has gone still. family fills in the last minutes and you nod through words you cannot hold. on the drive back every notification sounds like something you cannot fix"
+      "success": "you make it to her room while she is still awake enough to know you are there. there is almost nothing left to fix so you sit with her and stay. after that you stop answering messages behind the wheel",
+      "failure": "you reach the ward a few minutes too late and spend the rest of the night listening to other people describe what you missed. the drive home is silent except for every sound your phone still makes. after that you stop answering messages behind the wheel"
     },
     "prompts": [
-      { "incoming": "are you close", "reply": "ten minutes if lights hold" },
-      { "incoming": "she is asking for you", "reply": "tell her im coming" },
-      { "incoming": "pain is worse", "reply": "im so sorry" },
-      { "incoming": "doctor wants a word after", "reply": "ok" },
-      { "incoming": "hurry", "reply": "im trying" },
-      { "incoming": "she opened her eyes once", "reply": "i said your name quiet" },
-      { "incoming": "did she hear you", "reply": "i think so" },
-      { "incoming": "parking is a nightmare", "reply": "i will walk" },
-      { "incoming": "come up the east stairs", "reply": "on my way" }
+      { "incoming": "where are you", "reply": "five minutes maybe less" },
+      { "incoming": "she woke up and asked for you", "reply": "tell her im almost there" },
+      { "incoming": "her breathing changed", "reply": "is the doctor with her" },
+      { "incoming": "yes they are here now", "reply": "please keep talking to her" },
+      { "incoming": "do you want me to say anything", "reply": "tell her i love her" },
+      { "incoming": "parking is full", "reply": "im leaving the car and running" },
+      { "incoming": "use the east entrance", "reply": "im at the door now" },
+      { "incoming": "hurry", "reply": "im coming" }
     ]
   }
 }

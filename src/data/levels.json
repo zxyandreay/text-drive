@@ -12,7 +12,7 @@
     "obstacleSpeed": 238,
     "obstacleSpawnMs": 1340,
     "maxStress": 5,
-    "storyTimeSeconds": 168
+    "storyTimeSeconds": 118
   },
   {
     "id": "marriage",
@@ -27,7 +27,7 @@
     "obstacleSpeed": 270,
     "obstacleSpawnMs": 1080,
     "maxStress": 4,
-    "storyTimeSeconds": 175
+    "storyTimeSeconds": 148
   },
   {
     "id": "dying-wife",
@@ -42,6 +42,6 @@
     "obstacleSpeed": 292,
     "obstacleSpawnMs": 980,
     "maxStress": 3,
-    "storyTimeSeconds": 132
+    "storyTimeSeconds": 120
   }
 ]

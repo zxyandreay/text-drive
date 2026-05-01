@@ -19,25 +19,25 @@ const DEFAULT: MessagePacing = {
 
 const BY_LEVEL: Record<string, MessagePacing> = {
   "first-date": {
-    incomingDelayMs: 420,
-    hintDelayMs: 560,
-    sendBeatMs: 200,
-    nextIncomingMs: 920,
-    typingIndicatorMs: 360
+    incomingDelayMs: 450,
+    hintDelayMs: 600,
+    sendBeatMs: 210,
+    nextIncomingMs: 980,
+    typingIndicatorMs: 400
   },
   marriage: {
-    incomingDelayMs: 580,
-    hintDelayMs: 720,
-    sendBeatMs: 260,
-    nextIncomingMs: 1200,
-    typingIndicatorMs: 480
+    incomingDelayMs: 520,
+    hintDelayMs: 640,
+    sendBeatMs: 240,
+    nextIncomingMs: 1050,
+    typingIndicatorMs: 420
   },
   "dying-wife": {
-    incomingDelayMs: 720,
-    hintDelayMs: 820,
-    sendBeatMs: 280,
-    nextIncomingMs: 1480,
-    typingIndicatorMs: 520
+    incomingDelayMs: 300,
+    hintDelayMs: 400,
+    sendBeatMs: 170,
+    nextIncomingMs: 720,
+    typingIndicatorMs: 280
   }
 };
 
