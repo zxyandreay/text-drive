@@ -83,7 +83,7 @@ export class MainMenuScene extends Phaser.Scene {
     const taglineWrap = Math.min(TAGLINE_MAX_W, stripW - STRIP_PAD_X * 2);
 
     const tagline = this.add
-      .text(cx, 0, "drive and type. the road does not wait.", {
+      .text(cx, 0, "a game about driving and texting at the same time", {
         fontFamily: UiTheme.fontFamily,
         fontSize: UiTheme.sizes.menuTagline,
         color: UiTheme.colors.menuTagline,
