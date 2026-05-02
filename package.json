@@ -2,7 +2,7 @@
   "name": "text-drive",
   "private": true,
   "version": "0.0.0",
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE",
   "type": "module",
   "scripts": {
     "dev": "vite",
