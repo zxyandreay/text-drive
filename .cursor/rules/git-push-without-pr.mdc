@@ -1,0 +1,13 @@
+---
+description: Push to Git without opening PRs unless the user explicitly requests one.
+alwaysApply: true
+---
+
+# Git — commit and push without pull requests
+
+When the user asks to **commit**, **push**, or **commit and push** (or similar):
+
+- Use `git add`, `git commit`, and `git push` to the **current branch** as needed.
+- **Do not** run `gh pr create` or otherwise open a GitHub pull request unless the user **explicitly** asks for a PR (for example: "create pr", "open a pull request", "merge via pr").
+
+This repo’s `main` branch is **not** branch-protected on GitHub, so changes can land on `main` with a direct push. To avoid PRs entirely: work on `main`, or merge a feature branch into `main` locally and run `git push origin main`.
