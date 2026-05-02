@@ -147,5 +147,6 @@ See the [LICENSE](LICENSE) file for details.
 
 ## Development notes
 
+- **Git** — `main` is not branch-protected on GitHub: you can commit on `main` and `git push origin main`, or merge a branch locally and push—no pull request is required unless you want one.
 - Fixed logical size **900×540**, scaled with `FIT` and centered (`src/main.ts`).
 - Arcade steering parameters live in a single `STEERING` object at the top of `DrivingSystem.ts` for easy tuning.
