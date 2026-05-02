@@ -133,6 +133,10 @@ For **GitHub Pages**, CI sets `VITE_BASE_PATH` to `/<repository-name>/` so asset
 
 Possible directions if the prototype continues: more levels or rewrites, sound design, accessibility (e.g. broader input or difficulty options), tighter tutorial copy, or technical hardening—without promising any specific schedule.
 
+## License
+
+This project is released under the [MIT License](LICENSE).
+
 ## Development notes
 
 - Fixed logical size **900×540**, scaled with `FIT` and centered (`src/main.ts`).
