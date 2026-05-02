@@ -12,19 +12,31 @@
     />
   </head>
   <body>
-    <span
-      aria-hidden="true"
-      style="
-        position: absolute;
-        left: -9999px;
-        top: 0;
-        font: 700 168px Teko, sans-serif;
-        font-family: Inter, sans-serif;
-        font-weight: 600;
-      "
-      >TEXT DRIVE</span
-    >
-    <div id="app"></div>
+    <div class="page-shell">
+      <span
+        aria-hidden="true"
+        style="
+          position: absolute;
+          left: -9999px;
+          top: 0;
+          font: 700 168px Teko, sans-serif;
+          font-family: Inter, sans-serif;
+          font-weight: 600;
+        "
+        >TEXT DRIVE</span
+      >
+      <div id="app"></div>
+      <footer class="site-footer" aria-label="Site credit">
+        <span class="site-footer__credit">Made by zxyandreay · </span
+        ><a
+          class="site-footer__link"
+          href="https://ko-fi.com/zxyandreay"
+          target="_blank"
+          rel="noopener noreferrer"
+          >Support on Ko-fi</a
+        >
+      </footer>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
