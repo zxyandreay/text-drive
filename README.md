@@ -4,6 +4,8 @@
 
 The npm package name is `text-drive`; the in-game title is **TEXT DRIVE**.
 
+Source-available project for learning and portfolio review. Commercial use requires permission.
+
 ## Prototype note
 
 This is an intentional **prototype**, not a finished commercial game. Scope is limited to a playable vertical slice: one core mechanic, three authored levels, and enough UI and polish to show how the idea feels. Expect a small codebase and honest limitations rather than a long roadmap of systems.
@@ -135,7 +137,13 @@ Possible directions if the prototype continues: more levels or rewrites, sound d
 
 ## License
 
-This project is released under the [MIT License](LICENSE).
+This project is source-available for learning and portfolio review.
+
+You may view and study the code for personal and educational purposes, but you may not copy, redistribute, publish, resell, monetize, or use this project or modified versions commercially without written permission from the author.
+
+For commercial use, licensing, or permission requests, please contact the author.
+
+See the [LICENSE](LICENSE) file for details.
 
 ## Development notes
 
