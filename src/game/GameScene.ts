@@ -263,11 +263,12 @@ export class GameScene extends Phaser.Scene {
     this.hintCardBg.setDepth(L.hudDepth);
 
     this.hintCardText = this.add
-      .text(0, 0, "mouse steer · enter send · backspace edit", {
+      .text(0, 0, "mouse steer · enter send · backspace edit\nesc · pause", {
         fontFamily: UiTheme.fontFamily,
         fontSize: UiTheme.sizes.hint,
         color: UiTheme.colors.muted,
-        align: "left",
+        align: "center",
+        lineSpacing: 3,
         wordWrap: { width: 200 }
       })
       .setOrigin(0.5, 0.5);
@@ -350,7 +351,7 @@ export class GameScene extends Phaser.Scene {
     const hint = L.hintCard;
     this.hintCardBg.setPosition(hint.cx, hint.cy);
     this.hintCardBg.setSize(hint.w, hint.h);
-    this.hintCardText.setPosition(hint.cx, hint.cy - 6);
+    this.hintCardText.setPosition(hint.cx, hint.cy - 4);
     this.hintCardText.setWordWrapWidth(Math.max(96, hint.w - 16), true);
   }
 
