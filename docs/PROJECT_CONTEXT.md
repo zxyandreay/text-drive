@@ -1,6 +1,6 @@
 # TEXT DRIVE Project Context
 
-This document is an AI handoff file for the `text-drive` project. It is meant to give another developer or AI assistant enough context to understand what the app is, how it is structured, where the important behavior lives, and how to debug or extend it without first reverse-engineering the whole repository.
+This document is an handoff file for the `text-drive` project. It is meant to give another developer or AI assistant enough context to understand what the app is, how it is structured, where the important behavior lives, and how to debug or extend it without first reverse-engineering the whole repository.
 
 ## 1. Project Identity
 
