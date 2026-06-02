@@ -1,8 +1,8 @@
-# TEXT DRIVE
+# Text & Drive
 
-**TEXT DRIVE** is a small browser game prototype built with Phaser 3. You steer a car while typing exact text replies in a phone UI: the run is a race between finishing the conversation, staying in the lane, and keeping stress from overwhelming you. The project is narrative-driven and focused on split attention—not on a large feature set.
+**Text & Drive** is a small browser game prototype built with Phaser 3. You steer a car while typing exact text replies in a phone UI: the run is a race between finishing the conversation, staying in the lane, and keeping stress from overwhelming you. The project is narrative-driven and focused on split attention—not on a large feature set.
 
-The npm package name is `text-drive`; the in-game title is **TEXT DRIVE**.
+The npm package name remains `text-drive`; the in-game title is **Text & Drive**.
 
 Source-available project for learning and portfolio review. Commercial use requires permission.
 
@@ -115,7 +115,7 @@ Other scripts:
 | `npm run preview` | Serve the production build locally |
 | `npm run gh -- …` | Windows: run GitHub CLI via `scripts/invoke-gh.ps1` |
 
-For **GitHub Pages**, CI sets `VITE_BASE_PATH` to `/<repository-name>/` so asset paths resolve. Example deploy: [text-drive on GitHub Pages](https://zxyandreay.github.io/text-drive/). Workflow: `.github/workflows/deploy-pages.yml`.
+For **GitHub Pages**, CI sets `VITE_BASE_PATH` to `/<repository-name>/` so asset paths resolve. Example deploy: [Text & Drive on GitHub Pages](https://zxyandreay.github.io/text-drive/). Workflow: `.github/workflows/deploy-pages.yml`.
 
 ## Tech stack
 

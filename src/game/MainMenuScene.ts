@@ -22,7 +22,7 @@ const ROAD_VANISH_Y_FRAC = 0.36;
 const ROAD_BOTTOM_Y_FRAC = 0.92;
 
 /**
- * Teko bold "TEXT DRIVE" is very wide; cap by usable width so it does not clip the canvas edges.
+ * Teko bold "Text & Drive" is very wide; cap by usable width so it does not clip the canvas edges.
  * Height caps keep the wordmark large but leave room for the HUD strip.
  */
 function mainMenuTitlePx(width: number, height: number): number {
@@ -65,7 +65,7 @@ export class MainMenuScene extends Phaser.Scene {
      * tokens, so families like `Teko, sans-serif` break and weight/size can fail silently.
      */
     const title = this.add
-      .text(cx, titleY, "TEXT DRIVE", {
+      .text(cx, titleY, "Text & Drive", {
         fontFamily: UiTheme.fontDisplay,
         fontSize: `${titlePx}px`,
         fontStyle: "bold",

@@ -1,15 +1,15 @@
-# TEXT DRIVE Project Context
+# Text & Drive Project Context
 
-This document is an handoff file for the `text-drive` project. It is meant to give another developer or AI assistant enough context to understand what the app is, how it is structured, where the important behavior lives, and how to debug or extend it without first reverse-engineering the whole repository.
+This document is an AI handoff file for **Text & Drive**. It is meant to give another developer or AI assistant enough context to understand what the app is, how it is structured, where the important behavior lives, and how to debug or extend it without first reverse-engineering the whole repository.
 
 ## 1. Project Identity
 
-`TEXT DRIVE` is a small browser game prototype built with Phaser 3, TypeScript, and Vite. The player drives a car while typing exact text replies into a phone UI. The game is about split attention: the player must keep the car inside the lane, avoid obstacles, finish a message thread, and manage rising stress before time runs out.
+**Text & Drive** is a small browser game prototype built with Phaser 3, TypeScript, and Vite. The player drives a car while typing exact text replies into a phone UI. The game is about split attention: the player must keep the car inside the lane, avoid obstacles, finish a message thread, and manage rising stress before time runs out.
 
 Important identity details:
 
-- Repository/package name: `text-drive`
-- In-game title: `TEXT DRIVE`
+- Technical repository/package slug: `text-drive`
+- In-game title: `Text & Drive`
 - Runtime target: browser
 - Rendering/game framework: Phaser 3
 - Language: TypeScript
@@ -159,7 +159,7 @@ It does the following:
 
 `index.html` provides:
 
-- The document title `TEXT DRIVE`
+- The document title `Text & Drive`
 - The favicon from `/favicon.svg`
 - Google Fonts links for Inter and Teko
 - A hidden text span to encourage browser font availability
@@ -230,7 +230,7 @@ Important input constraints:
 Primary user flow:
 
 1. `MainMenuScene`
-   - Shows the `TEXT DRIVE` title, animated road backdrop, tagline, and `START`.
+   - Shows the `Text & Drive` title, animated road backdrop, tagline, and `START`.
    - Clicking `START` opens `LevelSelectScene`.
 
 2. `LevelSelectScene`
@@ -294,7 +294,7 @@ Responsibilities:
 
 - Draws main menu background and road-style perspective.
 - Animates faint center dashes using a `Graphics` object in `update`.
-- Displays large `TEXT DRIVE` wordmark using Teko.
+- Displays large `Text & Drive` wordmark using Teko.
 - Computes responsive title font size with `mainMenuTitlePx`.
 - Shows tagline: `a game about texting while driving.`
 - Creates a `START` button using `UiFactory.createButton`.

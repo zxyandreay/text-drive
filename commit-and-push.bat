@@ -12,7 +12,7 @@ rem ============================================================
 rem  Commit And Push Template
 rem  Edit this section for your project.
 rem ============================================================
-set "DEFAULT_COMMIT_MESSAGE=Update text-drive"
+set "DEFAULT_COMMIT_MESSAGE=Update Text & Drive"
 set "VALIDATION_1=npm.cmd run build"
 set "VALIDATION_2="
 set "VALIDATION_3="

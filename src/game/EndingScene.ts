@@ -20,7 +20,7 @@ export class EndingScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(UiTheme.colors.bg);
 
     const brand = this.add
-      .text(width / 2, 86, "TEXT DRIVE", {
+      .text(width / 2, 86, "Text & Drive", {
         fontFamily: UiTheme.fontDisplay,
         fontSize: UiTheme.sizes.menuTitleSm,
         fontStyle: "bold",
