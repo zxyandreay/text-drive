@@ -477,7 +477,7 @@ export class GameScene extends Phaser.Scene {
       this.remainingStorySeconds = Math.max(0, this.remainingStorySeconds - deltaSeconds);
       this.refreshStoryTimerHud();
       if (this.remainingStorySeconds <= 0) {
-        this.endRun("out of story time");
+        this.endRun("you were too late");
         return;
       }
     }
@@ -502,11 +502,11 @@ export class GameScene extends Phaser.Scene {
       this.statusText.setColor(UiTheme.colors.body);
     }
 
-    this.stressText.setText(`stress ${this.stressSystem.getStress()}/${this.stressSystem.getMaxStress()}`);
+    this.stressText.setText(`hits ${this.stressSystem.getStress()}/${this.stressSystem.getMaxStress()}`);
     this.scoreText.setText(`score ${this.runScore.getScore()}`);
 
     if (this.stressSystem.isOverloaded()) {
-      this.endRun("cognitive overload");
+      this.endRun("too many hits");
       return;
     }
 
@@ -530,7 +530,7 @@ export class GameScene extends Phaser.Scene {
   private endRun(reason: string): void {
     this.gameOver = true;
     this.flowState = "ending";
-    if (reason === "cognitive overload") {
+    if (reason === "too many hits") {
       this.runScore.penalizeOverload();
     }
     const level = this.levelManager.getCurrentLevel();
