@@ -1,6 +1,6 @@
 # Text & Drive
 
-**Text & Drive** is a small browser game prototype built with Phaser 3. You steer a car while typing exact text replies in a phone UI: the run is a race between finishing the conversation, staying in the lane, and keeping stress from overwhelming you. The project is narrative-driven and focused on split attention—not on a large feature set.
+**Text & Drive** is a small browser game prototype built with Phaser 3. You steer a car while typing exact text replies in a phone UI: the run is a race between finishing the conversation, staying in the lane, and keeping your focus long enough to reach the end. The project is narrative-driven and focused on split attention—not on a large feature set.
 
 The npm package name remains `text-drive`; the in-game title is **Text & Drive**.
 
@@ -16,7 +16,7 @@ Each level is a single continuous run:
 
 - **Drive** — Move the mouse to steer. The car follows a lane on a scrolling road and must avoid obstacles.
 - **Text** — Partner messages arrive in a chat-style UI. You type the expected reply and press **Enter** to send. Matching uses **trim** and is **case-insensitive**. Wrong text is only checked when you submit, not on every keystroke.
-- **Pressure** — A **story timer** counts down for the whole level. **Stress** rises on mistakes and crashes; if it hits the level cap, the run ends (“cognitive overload”). Running out of time also ends the run.
+- **Pressure** — A **story timer** counts down for the whole level. **Focus** starts full and drops after wrong sends and crashes; if it reaches zero, the run ends because you lost focus. Running out of time also ends the run.
 - **Progress** — You must complete every reply in the level’s dialogue thread to clear the level successfully.
 
 **Levels** (fixed order, linear unlock):
@@ -35,11 +35,11 @@ Features that exist in the code today:
 - **Level select** — One card per level with title, tone line, and **Completed / Unlocked / Locked** state; **Back** to the menu.
 - **Progress & saves** — Linear unlocks (finish level *n* to open *n*+1). Completion and **best score per level** (on successful clears) persist in **`localStorage`** (`text-drive-progress-v2`, with migration from an older key when present). Older saves may be normalized automatically when the format changes.
 - **Pre-level narration** — Full-screen intro from level data; dismiss with **Space**, **Enter**, or **click**; optional return to level select.
-- **Gameplay** — Simultaneous driving, obstacle avoidance, paced messaging (incoming delay, typing indicator, send beat), reply hints, and status text. Per-level road speed, obstacle cadence, stress cap, and story timer come from data.
-- **HUD** — Top bar with **← levels**, level title, campaign progress (`current / total` levels), stress, score, story time, status line, and a **dialogue progress** strip (completed sends vs total prompts for *this* level—not the same as campaign progress).
+- **Gameplay** — Simultaneous driving, obstacle avoidance, paced messaging (incoming delay, typing indicator, send beat), reply hints, and status text. Per-level road speed, obstacle cadence, focus allowance, and story timer come from data.
+- **HUD** — Top bar with **← levels**, level title, campaign progress (`current / total` levels), remaining focus, score, story time, status line, and a **dialogue progress** strip (completed sends vs total prompts for *this* level—not the same as campaign progress).
 - **Hint card** — Short control reminder beside the road (fades slightly once play begins).
 - **Pause** — **Escape** during gameplay opens a minimal overlay (resume, level select, main menu); simulation and message timers pause; typing is blocked. Choosing level select or main menu from pause **abandons** the run without the result flow.
-- **Scoring** — Points for correct sends, clearing the level, leftover story time, and a no-crash bonus; penalties for wrong submits, crashes, overload, and time out (see `RunScore`).
+- **Scoring** — Points for correct sends, clearing the level, leftover story time, and a no-crash bonus; penalties for wrong submits, crashes, losing focus, and time out (see `RunScore`).
 - **Results** — Two-step **Result** scene: score summary, then narrative **aftermath** from dialogue data; navigation to next level, replay, menu, or (after the final level, on success) an optional **ending** scene before returning to the menu.
 
 ## Controls
@@ -60,12 +60,12 @@ Pause is not available on the intro, result, or menu scenes from this key bindin
 1. **Main menu** → **START**
 2. **Level select** → pick an unlocked level (or **Back**)
 3. **Level intro** → continue (Space / Enter / click)
-4. **Gameplay** — finish all messages before the story timer hits zero; avoid overload; optionally **Escape** to pause
+4. **Gameplay** — finish all messages before the story timer hits zero; keep some focus remaining; optionally **Escape** to pause
 5. **Result** — score and context; **Continue** to aftermath copy
 6. **Aftermath** — outcome text and buttons (e.g. next level, again, main menu; after final success, option to view the **ending**)
 7. **Ending** (optional) → **Main menu**
 
-Failed runs (**story timer** or **stress overload**) go through the result / aftermath path with failure copy from data.
+Failed runs (**story timer** or **lost focus**) go through the result / aftermath path with failure copy from data.
 
 ## Project structure
 
@@ -78,12 +78,12 @@ src/
   main.ts            # Font preload, Phaser config, scene boot order
   style.css          # Page chrome around the canvas
   data/
-    levels.json      # Level ids, titles, intro lines, timers, speeds, stress cap
+    levels.json      # Level ids, titles, intro lines, timers, speeds, focus allowance
     dialogue.json    # Per-level message threads, expected replies, outcomes
   game/
     *Scene.ts        # MainMenu, LevelSelect, Game, Result, Ending
     managers/        # Level order, dialogue access, progress, scoring
-    systems/         # Driving, obstacles, stress, typing/input
+    systems/         # Driving, obstacles, focus effects, typing/input
     ui/              # Layout, phone UI, overlays, buttons, narrative wrapping, theme
     types/           # TypeScript shapes aligned with JSON
 index.html           # App mount, Google Fonts
