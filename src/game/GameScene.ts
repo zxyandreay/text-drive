@@ -57,7 +57,7 @@ export class GameScene extends Phaser.Scene {
   private topBarBg!: Phaser.GameObjects.Rectangle;
   private levelTitleText!: Phaser.GameObjects.Text;
   private progressText!: Phaser.GameObjects.Text;
-  private focusText!: Phaser.GameObjects.Text;
+  private stressText!: Phaser.GameObjects.Text;
   private scoreText!: Phaser.GameObjects.Text;
   private timerText!: Phaser.GameObjects.Text;
   private toneText!: Phaser.GameObjects.Text;
@@ -212,14 +212,14 @@ export class GameScene extends Phaser.Scene {
       .setOrigin(0, 0.5);
     this.progressText.setDepth(L.headerDepth);
 
-    this.focusText = this.add
+    this.stressText = this.add
       .text(0, 0, "", {
         fontFamily: UiTheme.fontFamily,
         fontSize: UiTheme.sizes.small,
-        color: UiTheme.colors.success
+        color: UiTheme.colors.stress
       })
       .setOrigin(0, 0.5);
-    this.focusText.setDepth(L.headerDepth);
+    this.stressText.setDepth(L.headerDepth);
 
     this.scoreText = this.add
       .text(0, 0, "", {
@@ -332,7 +332,7 @@ export class GameScene extends Phaser.Scene {
     this.progressText.setPosition(titleX, rowY);
 
     const statsStart = titleX + this.progressText.width + HUD_STATS_GAP;
-    this.focusText.setPosition(statsStart, rowY);
+    this.stressText.setPosition(statsStart, rowY);
     this.scoreText.setPosition(statsStart + HUD_STAT_STEP, rowY);
     this.timerText.setPosition(statsStart + HUD_STAT_STEP * 2, rowY);
 
@@ -502,11 +502,11 @@ export class GameScene extends Phaser.Scene {
       this.statusText.setColor(UiTheme.colors.body);
     }
 
-    this.refreshFocusHud();
+    this.stressText.setText(`stress ${this.stressSystem.getStress()}/${this.stressSystem.getMaxStress()}`);
     this.scoreText.setText(`score ${this.runScore.getScore()}`);
 
     if (this.stressSystem.isOverloaded()) {
-      this.endRun("you lost focus");
+      this.endRun("cognitive overload");
       return;
     }
 
@@ -527,24 +527,10 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private refreshFocusHud(): void {
-    const maxFocus = this.stressSystem.getMaxStress();
-    const focus = Math.max(0, maxFocus - this.stressSystem.getStress());
-    const ratio = maxFocus > 0 ? focus / maxFocus : 0;
-    this.focusText.setText(`focus ${focus}/${maxFocus}`);
-    if (ratio <= 0.25) {
-      this.focusText.setColor(UiTheme.colors.danger);
-    } else if (ratio <= 0.5) {
-      this.focusText.setColor(UiTheme.colors.warn);
-    } else {
-      this.focusText.setColor(UiTheme.colors.success);
-    }
-  }
-
   private endRun(reason: string): void {
     this.gameOver = true;
     this.flowState = "ending";
-    if (reason === "you lost focus") {
+    if (reason === "cognitive overload") {
       this.runScore.penalizeOverload();
     }
     const level = this.levelManager.getCurrentLevel();
@@ -580,7 +566,6 @@ export class GameScene extends Phaser.Scene {
     this.obstacleSystem.resetForLevel();
     this.stressSystem.configureLevel(level.maxStress);
     this.stressSystem.reset();
-    this.refreshFocusHud();
     this.runScore.reset();
     this.crashCount = 0;
     this.remainingStorySeconds = level.storyTimeSeconds;

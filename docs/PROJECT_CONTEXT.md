@@ -4,7 +4,7 @@ This document is an AI handoff file for **Text & Drive**. It is meant to give an
 
 ## 1. Project Identity
 
-**Text & Drive** is a small browser game prototype built with Phaser 3, TypeScript, and Vite. The player drives a car while typing exact text replies into a phone UI. The game is about split attention: the player must keep the car inside the lane, avoid obstacles, finish a message thread, and keep enough focus to reach the end before time runs out.
+**Text & Drive** is a small browser game prototype built with Phaser 3, TypeScript, and Vite. The player drives a car while typing exact text replies into a phone UI. The game is about split attention: the player must keep the car inside the lane, avoid obstacles, finish a message thread, and manage rising stress before time runs out.
 
 Important identity details:
 
@@ -188,7 +188,7 @@ The player must:
 - Type the exact expected reply into the phone UI.
 - Press Enter to submit replies.
 - Finish every prompt in the current dialogue thread.
-- Keep the focus meter above zero.
+- Stay below the level's stress cap.
 - Finish before the level story timer reaches zero.
 
 The key design tension is that the road needs visual and motor attention while the phone needs reading and typing attention.
@@ -255,7 +255,7 @@ Primary user flow:
    - Reply hint appears after a delay.
    - Player types and submits replies.
    - Story timer counts down.
-   - Focus drops after wrong submits or crashes under pressure.
+   - Stress rises from wrong submits or crashes under pressure.
    - Score changes throughout the run.
 
 5. Successful completion
@@ -266,9 +266,9 @@ Primary user flow:
    - If this was final level, `nextLevelId` is `null`.
 
 6. Failure completion
-   - Story timer reaches zero, or the focus meter reaches zero.
+   - Story timer reaches zero, or stress reaches/exceeds max stress.
    - Scene transitions to `ResultScene` with outcome `failure`.
-   - Failure reason is passed as either `out of story time` or `you lost focus`.
+   - Failure reason is passed as either `out of story time` or `cognitive overload`.
    - Failure aftermath text comes from dialogue data.
 
 7. `ResultScene`
@@ -349,7 +349,7 @@ Key private state:
   - top bar
   - level title
   - campaign progress text
-  - focus text
+  - stress text
   - score text
   - timer text
   - tone text
@@ -407,8 +407,8 @@ Gameplay update loop:
 - Applies wrong-submit penalty and stress incident for typing mistakes.
 - Checks crash events from obstacle system.
 - Applies crash penalty and stress incident only while typing system is under pressure.
-- Updates HUD status, remaining focus, score, and timer.
-- Ends the run when the internal stress count consumes all remaining focus.
+- Updates HUD status, stress, score, and timer.
+- Ends run if stress system is overloaded.
 - Handles success if typing is complete.
 
 Pause behavior:
@@ -434,7 +434,7 @@ Resize behavior:
 End run behavior:
 
 - Failure transitions after a short delayed call to `ResultScene`.
-- `you lost focus` applies the internal overload score penalty.
+- `cognitive overload` applies an additional overload score penalty.
 - Failure result payload includes outcome, level id, title, score, reason, no next level, and failure aftermath text.
 
 Success behavior:
@@ -582,7 +582,7 @@ export type DialogueBlock = {
 - `roadSpeed` controls lane marker scrolling and contributes to obstacle downward motion.
 - `obstacleSpeed` controls obstacle downward speed.
 - `obstacleSpawnMs` controls obstacle spawn cadence.
-- `maxStress` is the internal incident allowance used to derive the visible focus meter.
+- `maxStress` is the number of incidents that cause overload.
 - `storyTimeSeconds` is the whole-level countdown.
 
 `DialoguePrompt` controls each exchange:
@@ -614,7 +614,7 @@ Difficulty ramps through:
 - Higher road speed.
 - Higher obstacle speed.
 - Faster obstacle spawn cadence.
-- Smaller focus allowance (implemented by lowering `maxStress`).
+- Lower stress cap.
 - Heavier narrative tone.
 
 ### 9.3 Dialogue Data
@@ -1497,7 +1497,7 @@ Top bar includes:
 - Back hitbox and label.
 - Level title.
 - Campaign progress text, e.g. `1/3`.
-- Remaining focus text, e.g. `focus 5/5`.
+- Stress text, e.g. `stress 0/5`.
 - Score text.
 - Timer text.
 - Status text.
@@ -1550,13 +1550,13 @@ Tuning:
 - Road speed: `222`
 - Obstacle speed: `238`
 - Obstacle spawn: `1340ms`
-- Focus allowance (`maxStress`): `5`
+- Max stress: `5`
 - Story time: `118s`
 
 Dialogue purpose:
 
 - Short, casual replies.
-- Teaches the mechanic with a forgiving focus allowance and slower obstacle pressure.
+- Teaches the mechanic with forgiving stress cap and slower obstacle pressure.
 - Prompts include location, closeness, clothes, nerves, drink preference, and safe driving.
 
 Expected replies include:
@@ -1594,7 +1594,7 @@ Tuning:
 - Road speed: `246`
 - Obstacle speed: `270`
 - Obstacle spawn: `1080ms`
-- Focus allowance (`maxStress`): `4`
+- Max stress: `4`
 - Story time: `148s`
 
 Dialogue purpose:
@@ -1637,14 +1637,14 @@ Tuning:
 - Road speed: `262`
 - Obstacle speed: `292`
 - Obstacle spawn: `980ms`
-- Focus allowance (`maxStress`): `3`
+- Max stress: `3`
 - Story time: `120s`
 
 Dialogue purpose:
 
 - Urgent and emotionally heavy.
 - Replies remain relatively short but stakes are high.
-- Final level has the smallest focus allowance and fastest pacing.
+- Final level has lowest stress tolerance and fastest pacing.
 
 Expected replies include:
 
@@ -1931,14 +1931,14 @@ Relevant file:
 
 - `src/game/systems/DrivingSystem.ts`
 
-### 18.11 Focus or failure behavior is surprising
+### 18.11 Stress or failure behavior is surprising
 
 Check:
 
 - Wrong submits push typing incidents.
 - Crashes only increase stress if `typingSystem.isUnderPressure()` is true.
 - Overload is `stress >= maxStress`.
-- The player-facing reason `you lost focus` applies the internal overload score penalty before the result scene.
+- `cognitive overload` applies a score penalty before result scene.
 - Story timer failure reason is `out of story time`.
 
 Relevant files:
@@ -2114,7 +2114,7 @@ Use these files first when answering questions:
 | How does steering work? | `src/game/systems/DrivingSystem.ts` |
 | How do obstacles work? | `src/game/systems/ObstacleSystem.ts` |
 | How does typing work? | `src/game/systems/TypingSystem.ts` |
-| How does focus depletion work? | `src/game/systems/StressSystem.ts` |
+| How does stress work? | `src/game/systems/StressSystem.ts` |
 | How is phone UI built? | `src/game/ui/PhoneUI.ts` |
 | How is responsive gameplay layout calculated? | `src/game/ui/GameplayLayout.ts` |
 | How is narrative text wrapped? | `src/game/ui/narrativeLayout.ts` |
@@ -2135,7 +2135,7 @@ Think of the app as five layers:
    - Level configs and dialogue blocks loaded from JSON.
 
 4. Gameplay systems
-   - Driving, obstacles, typing, focus/stress internals, scoring, progress.
+   - Driving, obstacles, typing, stress, scoring, progress.
 
 5. UI helpers
    - Theme, buttons, gameplay layout, phone/chat, overlays, text wrapping.
